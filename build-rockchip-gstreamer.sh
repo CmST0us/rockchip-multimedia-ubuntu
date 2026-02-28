@@ -48,8 +48,33 @@ log() { echo "==> $*"; }
 log_phase() { echo ""; echo "========================================"; echo "  Phase $1: $2"; echo "========================================"; }
 err() { echo "ERROR: $*" >&2; exit 1; }
 
+HOST_UID="$(id -u)"
+HOST_GID="$(id -g)"
+
 container_exec() {
     docker exec "${DOCKER_CONTAINER_NAME}" /bin/bash -c "$*"
+}
+
+# Fix ownership of container-created (root-owned) files back to host user
+container_chown() {
+    for dir in "$@"; do
+        local container_path="${dir/#${WORK_DIR}/\/build}"
+        container_exec "chown -R ${HOST_UID}:${HOST_GID} '${container_path}'"
+    done
+}
+
+# Remove directories that may contain root-owned files (created by Docker)
+rm_docker_owned() {
+    for dir in "$@"; do
+        [ -d "$dir" ] || continue
+        rm -rf "$dir" 2>/dev/null && continue
+        local container_path="${dir/#${WORK_DIR}/\/build}"
+        if docker inspect --format='{{.State.Running}}' "${DOCKER_CONTAINER_NAME}" 2>/dev/null | grep -q true; then
+            container_exec "rm -rf '${container_path}'"
+        else
+            docker run --rm --platform linux/arm64 -v "${WORK_DIR}:/build" "${DOCKER_IMAGE_NAME}" rm -rf "${container_path}"
+        fi
+    done
 }
 
 ensure_container_running() {
@@ -151,7 +176,7 @@ build_gst_component() {
 
     # Build in container
     local build_subdir="build/${component}"
-    rm -rf "${BUILD_DIR}/${component}"
+    rm_docker_owned "${BUILD_DIR}/${component}"
 
     container_exec "cd /build && \
         meson setup ${build_subdir} sources/${tarball_name}-${GST_VERSION} \
@@ -159,13 +184,15 @@ build_gst_component() {
             --buildtype=release \
             --wrap-mode=nodownload \
             ${extra_meson_opts} && \
-        meson compile -C ${build_subdir}"
+        meson compile -C ${build_subdir} && \
+        chown -R ${HOST_UID}:${HOST_GID} ${build_subdir}"
 
     # Install
     local destdir="${BUILD_DIR}/${component}-install"
-    rm -rf "${destdir}"
+    rm_docker_owned "${destdir}"
     container_exec "cd /build && \
-        DESTDIR=/build/build/${component}-install meson install -C ${build_subdir}"
+        DESTDIR=/build/build/${component}-install meson install -C ${build_subdir} && \
+        chown -R ${HOST_UID}:${HOST_GID} /build/build/${component}-install"
 
     # Create .deb
     make_deb "${pkg_name}" "${pkg_version}" "${pkg_desc}" "${pkg_depends}" "${destdir}"
@@ -222,13 +249,14 @@ case "${CMD}" in
     clean)
         if [[ "${1:-}" == "--all" ]]; then
             log "Cleaning everything including Docker container and image..."
+            # Remove root-owned files via container before stopping it
+            rm_docker_owned "${WORK_DIR}"
             docker stop "${DOCKER_CONTAINER_NAME}" 2>/dev/null || true
             docker rm "${DOCKER_CONTAINER_NAME}" 2>/dev/null || true
             docker rmi "${DOCKER_IMAGE_NAME}" 2>/dev/null || true
-            rm -rf "${WORK_DIR}"
         else
             log "Cleaning build artifacts..."
-            rm -rf "${BUILD_DIR}" "${DEBS_DIR}"
+            rm_docker_owned "${BUILD_DIR}" "${DEBS_DIR}"
         fi
         exit 0
         ;;
@@ -321,7 +349,7 @@ phase_1_mpp() {
     fi
 
     # Build inside container
-    rm -rf "${BUILD_DIR}/mpp"
+    rm_docker_owned "${BUILD_DIR}/mpp"
     container_exec "cd /build/sources/rockchip-mpp && \
         mkdir -p /build/build/mpp && \
         cd /build/build/mpp && \
@@ -329,12 +357,14 @@ phase_1_mpp() {
         cmake /build/sources/rockchip-mpp -DRKPLATFORM=ON -DHAVE_DRM=ON \
             -DCMAKE_INSTALL_PREFIX=/usr \
             -DCMAKE_BUILD_TYPE=Release && \
-        make -j\$(nproc)"
+        make -j\$(nproc) && \
+        chown -R ${HOST_UID}:${HOST_GID} /build/build/mpp"
 
     # Install to destdir for runtime package
-    rm -rf "${destdir}" "${destdir_dev}"
+    rm_docker_owned "${destdir}" "${destdir_dev}"
     container_exec "cd /build/build/mpp && \
-        DESTDIR=/build/build/mpp-install make install"
+        DESTDIR=/build/build/mpp-install make install && \
+        chown -R ${HOST_UID}:${HOST_GID} /build/build/mpp-install"
 
     # Split into runtime and dev packages
     mkdir -p "${destdir_dev}/usr/lib/aarch64-linux-gnu/pkgconfig"
@@ -376,21 +406,23 @@ phase_2_librga() {
     fi
 
     # Build
-    rm -rf "${BUILD_DIR}/librga"
+    rm_docker_owned "${BUILD_DIR}/librga"
     container_exec "cd /build && \
         meson setup build/librga sources/rockchip-librga \
             --prefix=/usr \
             --buildtype=release \
             -Dlibdrm=true && \
-        meson compile -C build/librga"
+        meson compile -C build/librga && \
+        chown -R ${HOST_UID}:${HOST_GID} /build/build/librga"
 
     # Install
     local destdir="${BUILD_DIR}/librga-install"
     local destdir_dev="${BUILD_DIR}/librga-dev-install"
-    rm -rf "${destdir}" "${destdir_dev}"
+    rm_docker_owned "${destdir}" "${destdir_dev}"
 
     container_exec "cd /build && \
-        DESTDIR=/build/build/librga-install meson install -C build/librga"
+        DESTDIR=/build/build/librga-install meson install -C build/librga && \
+        chown -R ${HOST_UID}:${HOST_GID} /build/build/librga-install"
 
     # Split runtime/dev
     mkdir -p "${destdir_dev}/usr"
@@ -488,7 +520,7 @@ phase_7_gst_rockchip() {
     fi
 
     # Build in container
-    rm -rf "${BUILD_DIR}/gst-rockchip"
+    rm_docker_owned "${BUILD_DIR}/gst-rockchip"
     container_exec "cd /build && \
         meson setup build/gst-rockchip sources/gstreamer1.0-rockchip \
             --prefix=/usr \
@@ -496,13 +528,15 @@ phase_7_gst_rockchip() {
             -Drockchipmpp=enabled \
             -Drga=enabled \
             -Dkmssrc=enabled && \
-        meson compile -C build/gst-rockchip"
+        meson compile -C build/gst-rockchip && \
+        chown -R ${HOST_UID}:${HOST_GID} /build/build/gst-rockchip"
 
     # Install
     local destdir="${BUILD_DIR}/gst-rockchip-install"
-    rm -rf "${destdir}"
+    rm_docker_owned "${destdir}"
     container_exec "cd /build && \
-        DESTDIR=/build/build/gst-rockchip-install meson install -C build/gst-rockchip"
+        DESTDIR=/build/build/gst-rockchip-install meson install -C build/gst-rockchip && \
+        chown -R ${HOST_UID}:${HOST_GID} /build/build/gst-rockchip-install"
 
     make_deb \
         "gstreamer1.0-rockchip" \
