@@ -1,0 +1,28 @@
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN echo 'deb http://ports.ubuntu.com/ubuntu-ports noble main universe\n\
+deb http://ports.ubuntu.com/ubuntu-ports noble-updates main universe\n\
+deb http://ports.ubuntu.com/ubuntu-ports noble-security main universe' \
+    > /etc/apt/sources.list
+
+RUN apt-get update && apt-get install -y \
+    build-essential meson cmake ninja-build pkg-config git \
+    libdrm-dev libglib2.0-dev libgudev-1.0-dev \
+    libx11-dev libxext-dev libxv-dev \
+    libwayland-dev wayland-protocols \
+    libegl-dev libgles-dev libgl-dev \
+    libpango1.0-dev libcairo2-dev \
+    libasound2-dev libpulse-dev \
+    libsoup-3.0-dev libjson-glib-dev \
+    libflac-dev libvorbis-dev libopus-dev \
+    iso-codes libtheora-dev libogg-dev \
+    libvisual-0.4-dev libcdparanoia-dev \
+    flex bison nasm \
+    dpkg-dev fakeroot \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+
+CMD ["sleep", "infinity"]

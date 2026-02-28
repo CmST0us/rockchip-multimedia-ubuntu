@@ -4,17 +4,21 @@ set -euo pipefail
 # ============================================================
 # Rockchip GStreamer .deb Build Script
 # Builds ARM64 .deb packages for Rockchip multimedia stack
-# using QEMU user-mode emulation in ARM64 chroot
+# using QEMU user-mode emulation in ARM64 Docker container
 # ============================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORK_DIR="${SCRIPT_DIR}/build-gst-rockchip"
-CHROOT_DIR="${WORK_DIR}/chroot"
 SOURCES_DIR="${WORK_DIR}/sources"
 BUILD_DIR="${WORK_DIR}/build"
 DEBS_DIR="${WORK_DIR}/debs"
 PACKAGES_DIR="${SCRIPT_DIR}/yocto-rockchip/packages"
 PATCHES_BASE="${SCRIPT_DIR}/yocto-rockchip/meta-rockchip/recipes-multimedia/gstreamer"
+
+# Docker settings
+DOCKER_IMAGE_NAME="rockchip-gstreamer-builder"
+DOCKER_CONTAINER_NAME="rockchip-gstreamer-build"
+DOCKERFILE_PATH="${SCRIPT_DIR}/Dockerfile.gst-builder"
 
 # Versions
 GST_VERSION="1.22.12"
@@ -44,30 +48,15 @@ log() { echo "==> $*"; }
 log_phase() { echo ""; echo "========================================"; echo "  Phase $1: $2"; echo "========================================"; }
 err() { echo "ERROR: $*" >&2; exit 1; }
 
-chroot_exec() {
-    sudo chroot "${CHROOT_DIR}" /bin/bash -c "$*"
+container_exec() {
+    docker exec "${DOCKER_CONTAINER_NAME}" /bin/bash -c "$*"
 }
 
-chroot_mount() {
-    log "Mounting chroot filesystems..."
-    sudo mount --bind /proc "${CHROOT_DIR}/proc" 2>/dev/null || true
-    sudo mount --bind /sys "${CHROOT_DIR}/sys" 2>/dev/null || true
-    sudo mount --bind /dev "${CHROOT_DIR}/dev" 2>/dev/null || true
-    sudo mount --bind /dev/pts "${CHROOT_DIR}/dev/pts" 2>/dev/null || true
+ensure_container_running() {
+    if ! docker inspect --format='{{.State.Running}}' "${DOCKER_CONTAINER_NAME}" 2>/dev/null | grep -q true; then
+        err "Container '${DOCKER_CONTAINER_NAME}' is not running. Run 'build --only setup' first."
+    fi
 }
-
-chroot_umount() {
-    log "Unmounting chroot filesystems..."
-    sudo umount "${CHROOT_DIR}/dev/pts" 2>/dev/null || true
-    sudo umount "${CHROOT_DIR}/dev" 2>/dev/null || true
-    sudo umount "${CHROOT_DIR}/sys" 2>/dev/null || true
-    sudo umount "${CHROOT_DIR}/proc" 2>/dev/null || true
-}
-
-cleanup() {
-    chroot_umount
-}
-trap cleanup EXIT
 
 # Apply patches from meta-rockchip to a source directory
 apply_patches() {
@@ -120,13 +109,10 @@ EOF
     log "Created: ${deb_file}"
 }
 
-# Install a .deb into the chroot
-install_deb_to_chroot() {
+# Install a .deb into the container (file accessible via /build volume)
+install_deb_to_container() {
     local deb_file="$1"
-    local deb_basename="$(basename "${deb_file}")"
-    cp "${deb_file}" "${CHROOT_DIR}/tmp/${deb_basename}"
-    chroot_exec "dpkg -i /tmp/${deb_basename}"
-    rm -f "${CHROOT_DIR}/tmp/${deb_basename}"
+    container_exec "dpkg -i /build/debs/$(basename "${deb_file}")"
 }
 
 # Build a GStreamer component from tarball + patches
@@ -144,7 +130,6 @@ build_gst_component() {
     local tarball="${PACKAGES_DIR}/${tarball_name}-${GST_VERSION}.tar.xz"
     local src="${SOURCES_DIR}/${tarball_name}-${GST_VERSION}"
     local patch_dir="${PATCHES_BASE}/${patch_subdir}_${GST_PATCH_VERSION}"
-    local chroot_build="/build"
 
     # Extract source and apply patches (only on first extraction)
     if [ ! -d "${src}" ]; then
@@ -164,14 +149,11 @@ build_gst_component() {
         apply_patches "${src}" "${patch_dir}"
     fi
 
-    # Build in chroot
-    sudo mkdir -p "${CHROOT_DIR}${chroot_build}"
-    sudo mount --bind "${WORK_DIR}" "${CHROOT_DIR}${chroot_build}" 2>/dev/null || true
-
+    # Build in container
     local build_subdir="build/${component}"
     rm -rf "${BUILD_DIR}/${component}"
 
-    chroot_exec "cd ${chroot_build} && \
+    container_exec "cd /build && \
         meson setup ${build_subdir} sources/${tarball_name}-${GST_VERSION} \
             --prefix=/usr \
             --buildtype=release \
@@ -182,16 +164,14 @@ build_gst_component() {
     # Install
     local destdir="${BUILD_DIR}/${component}-install"
     rm -rf "${destdir}"
-    chroot_exec "cd ${chroot_build} && \
-        DESTDIR=${chroot_build}/build/${component}-install meson install -C ${build_subdir}"
+    container_exec "cd /build && \
+        DESTDIR=/build/build/${component}-install meson install -C ${build_subdir}"
 
     # Create .deb
     make_deb "${pkg_name}" "${pkg_version}" "${pkg_desc}" "${pkg_depends}" "${destdir}"
 
-    # Install into chroot
-    install_deb_to_chroot "${DEBS_DIR}/${pkg_name}_${pkg_version}_arm64.deb"
-
-    sudo umount "${CHROOT_DIR}${chroot_build}" 2>/dev/null || true
+    # Install into container for subsequent phases
+    install_deb_to_container "${DEBS_DIR}/${pkg_name}_${pkg_version}_arm64.deb"
 }
 
 # ============================================================
@@ -241,9 +221,11 @@ case "${CMD}" in
         ;;
     clean)
         if [[ "${1:-}" == "--all" ]]; then
-            log "Cleaning everything including chroot..."
-            chroot_umount
-            sudo rm -rf "${WORK_DIR}"
+            log "Cleaning everything including Docker container and image..."
+            docker stop "${DOCKER_CONTAINER_NAME}" 2>/dev/null || true
+            docker rm "${DOCKER_CONTAINER_NAME}" 2>/dev/null || true
+            docker rmi "${DOCKER_IMAGE_NAME}" 2>/dev/null || true
+            rm -rf "${WORK_DIR}"
         else
             log "Cleaning build artifacts..."
             rm -rf "${BUILD_DIR}" "${DEBS_DIR}"
@@ -254,7 +236,18 @@ case "${CMD}" in
         echo "=== Build Status ==="
         echo "Work dir: ${WORK_DIR}"
         echo ""
-        echo "Chroot: $([ -d "${CHROOT_DIR}/usr" ] && echo 'READY' || echo 'NOT CREATED')"
+        if docker inspect --format='{{.State.Running}}' "${DOCKER_CONTAINER_NAME}" 2>/dev/null | grep -q true; then
+            echo "Docker container: RUNNING (${DOCKER_CONTAINER_NAME})"
+        elif docker inspect "${DOCKER_CONTAINER_NAME}" >/dev/null 2>&1; then
+            echo "Docker container: STOPPED (${DOCKER_CONTAINER_NAME})"
+        else
+            echo "Docker container: NOT CREATED"
+        fi
+        if docker image inspect "${DOCKER_IMAGE_NAME}" >/dev/null 2>&1; then
+            echo "Docker image: EXISTS (${DOCKER_IMAGE_NAME})"
+        else
+            echo "Docker image: NOT BUILT"
+        fi
         echo ""
         echo "Generated .deb packages:"
         if [ -d "${DEBS_DIR}" ]; then
@@ -273,56 +266,50 @@ esac
 # ============================================================
 
 phase_0_setup() {
-    log_phase 0 "Setting up ARM64 chroot"
+    log_phase 0 "Setting up ARM64 Docker container"
 
     # Check host prerequisites
-    for cmd in debootstrap qemu-aarch64-static; do
-        command -v "$cmd" >/dev/null 2>&1 || \
-            err "$cmd not found. Install: sudo apt install qemu-user-static debootstrap binfmt-support"
-    done
+    command -v docker >/dev/null 2>&1 || \
+        err "docker not found. Install Docker: https://docs.docker.com/engine/install/"
+
+    # Check QEMU binfmt_misc registration for ARM64
+    if [ ! -f /proc/sys/fs/binfmt_misc/qemu-aarch64 ]; then
+        err "QEMU binfmt_misc not registered for aarch64. Install: sudo apt install qemu-user-static binfmt-support"
+    fi
 
     mkdir -p "${SOURCES_DIR}" "${BUILD_DIR}" "${DEBS_DIR}"
 
-    if [ -d "${CHROOT_DIR}/usr" ]; then
-        log "Chroot already exists, skipping creation"
+    # Build Docker image (idempotent, uses layer cache)
+    log "Building Docker image '${DOCKER_IMAGE_NAME}'..."
+    docker build --platform linux/arm64 \
+        -t "${DOCKER_IMAGE_NAME}" \
+        -f "${DOCKERFILE_PATH}" \
+        "${SCRIPT_DIR}"
+
+    # Start container if not already running
+    if docker inspect --format='{{.State.Running}}' "${DOCKER_CONTAINER_NAME}" 2>/dev/null | grep -q true; then
+        log "Container '${DOCKER_CONTAINER_NAME}' already running"
     else
-        log "Creating ARM64 chroot (this takes a few minutes)..."
-        sudo debootstrap --arch=arm64 noble "${CHROOT_DIR}" http://ports.ubuntu.com/ubuntu-ports
+        # Remove stale stopped container if exists
+        docker rm -f "${DOCKER_CONTAINER_NAME}" 2>/dev/null || true
+
+        log "Starting container '${DOCKER_CONTAINER_NAME}'..."
+        docker run -d \
+            --name "${DOCKER_CONTAINER_NAME}" \
+            --platform linux/arm64 \
+            -v "${WORK_DIR}:/build" \
+            -v "${PACKAGES_DIR}:/packages:ro" \
+            -v "${PATCHES_BASE}:/patches:ro" \
+            "${DOCKER_IMAGE_NAME}"
     fi
 
-    chroot_mount
-
-    # Configure apt sources for universe
-    sudo tee "${CHROOT_DIR}/etc/apt/sources.list" > /dev/null <<'SOURCES'
-deb http://ports.ubuntu.com/ubuntu-ports noble main universe
-deb http://ports.ubuntu.com/ubuntu-ports noble-updates main universe
-deb http://ports.ubuntu.com/ubuntu-ports noble-security main universe
-SOURCES
-
-    chroot_exec "apt-get update"
-    chroot_exec "DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        build-essential meson cmake ninja-build pkg-config git \
-        libdrm-dev libglib2.0-dev libgudev-1.0-dev \
-        libx11-dev libxext-dev libxv-dev \
-        libwayland-dev wayland-protocols \
-        libegl-dev libgles-dev libgl-dev \
-        libpango1.0-dev libcairo2-dev \
-        libasound2-dev libpulse-dev \
-        libsoup-3.0-dev libjson-glib-dev \
-        libflac-dev libvorbis-dev libopus-dev \
-        iso-codes libtheora-dev libogg-dev \
-        libvisual-0.4-dev libcdparanoia-dev \
-        flex bison nasm \
-        dpkg-dev fakeroot"
-
-    log "Phase 0 complete: chroot ready"
+    log "Phase 0 complete: Docker container ready"
 }
 
 phase_1_mpp() {
     log_phase 1 "Building rockchip-mpp"
 
     local src="${SOURCES_DIR}/rockchip-mpp"
-    local chroot_src="/build/sources/rockchip-mpp"
     local destdir="${BUILD_DIR}/mpp-install"
     local destdir_dev="${BUILD_DIR}/mpp-dev-install"
 
@@ -333,26 +320,21 @@ phase_1_mpp() {
         (cd "${src}" && git checkout "${MPP_SRCREV}")
     fi
 
-    # Bind source into chroot
-    local chroot_build="/build"
-    sudo mkdir -p "${CHROOT_DIR}${chroot_build}"
-    sudo mount --bind "${WORK_DIR}" "${CHROOT_DIR}${chroot_build}" 2>/dev/null || true
-
-    # Build inside chroot
+    # Build inside container
     rm -rf "${BUILD_DIR}/mpp"
-    chroot_exec "cd ${chroot_build}/sources/rockchip-mpp && \
-        mkdir -p ${chroot_build}/build/mpp && \
-        cd ${chroot_build}/build/mpp && \
+    container_exec "cd /build/sources/rockchip-mpp && \
+        mkdir -p /build/build/mpp && \
+        cd /build/build/mpp && \
         CFLAGS='-D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64' \
-        cmake ${chroot_src} -DRKPLATFORM=ON -DHAVE_DRM=ON \
+        cmake /build/sources/rockchip-mpp -DRKPLATFORM=ON -DHAVE_DRM=ON \
             -DCMAKE_INSTALL_PREFIX=/usr \
             -DCMAKE_BUILD_TYPE=Release && \
         make -j\$(nproc)"
 
     # Install to destdir for runtime package
     rm -rf "${destdir}" "${destdir_dev}"
-    chroot_exec "cd ${chroot_build}/build/mpp && \
-        DESTDIR=${chroot_build}/build/mpp-install make install"
+    container_exec "cd /build/build/mpp && \
+        DESTDIR=/build/build/mpp-install make install"
 
     # Split into runtime and dev packages
     mkdir -p "${destdir_dev}/usr/lib/aarch64-linux-gnu/pkgconfig"
@@ -374,11 +356,9 @@ phase_1_mpp() {
     make_deb "rockchip-mpp" "1.3.9" "Rockchip Media Process Platform" "libdrm2" "${destdir}"
     make_deb "rockchip-mpp-dev" "1.3.9" "Rockchip MPP development files" "rockchip-mpp (= 1.3.9)" "${destdir_dev}"
 
-    # Install into chroot for subsequent phases
-    install_deb_to_chroot "${DEBS_DIR}/rockchip-mpp_1.3.9_arm64.deb"
-    install_deb_to_chroot "${DEBS_DIR}/rockchip-mpp-dev_1.3.9_arm64.deb"
-
-    sudo umount "${CHROOT_DIR}${chroot_build}" 2>/dev/null || true
+    # Install into container for subsequent phases
+    install_deb_to_container "${DEBS_DIR}/rockchip-mpp_1.3.9_arm64.deb"
+    install_deb_to_container "${DEBS_DIR}/rockchip-mpp-dev_1.3.9_arm64.deb"
 
     log "Phase 1 complete: rockchip-mpp .debs created"
 }
@@ -387,7 +367,6 @@ phase_2_librga() {
     log_phase 2 "Building rockchip-librga"
 
     local src="${SOURCES_DIR}/rockchip-librga"
-    local chroot_build="/build"
 
     # Clone source
     if [ ! -d "${src}/.git" ]; then
@@ -396,12 +375,9 @@ phase_2_librga() {
         (cd "${src}" && git checkout "${LIBRGA_SRCREV}")
     fi
 
-    sudo mkdir -p "${CHROOT_DIR}${chroot_build}"
-    sudo mount --bind "${WORK_DIR}" "${CHROOT_DIR}${chroot_build}" 2>/dev/null || true
-
     # Build
     rm -rf "${BUILD_DIR}/librga"
-    chroot_exec "cd ${chroot_build} && \
+    container_exec "cd /build && \
         meson setup build/librga sources/rockchip-librga \
             --prefix=/usr \
             --buildtype=release \
@@ -413,8 +389,8 @@ phase_2_librga() {
     local destdir_dev="${BUILD_DIR}/librga-dev-install"
     rm -rf "${destdir}" "${destdir_dev}"
 
-    chroot_exec "cd ${chroot_build} && \
-        DESTDIR=${chroot_build}/build/librga-install meson install -C build/librga"
+    container_exec "cd /build && \
+        DESTDIR=/build/build/librga-install meson install -C build/librga"
 
     # Split runtime/dev
     mkdir -p "${destdir_dev}/usr"
@@ -429,10 +405,8 @@ phase_2_librga() {
     make_deb "librga2" "2.1.0" "Rockchip RGA 2D acceleration library" "libdrm2" "${destdir}"
     make_deb "librga-dev" "2.1.0" "Rockchip RGA development files" "librga2 (= 2.1.0)" "${destdir_dev}"
 
-    install_deb_to_chroot "${DEBS_DIR}/librga2_2.1.0_arm64.deb"
-    install_deb_to_chroot "${DEBS_DIR}/librga-dev_2.1.0_arm64.deb"
-
-    sudo umount "${CHROOT_DIR}${chroot_build}" 2>/dev/null || true
+    install_deb_to_container "${DEBS_DIR}/librga2_2.1.0_arm64.deb"
+    install_deb_to_container "${DEBS_DIR}/librga-dev_2.1.0_arm64.deb"
 
     log "Phase 2 complete: librga .debs created"
 }
@@ -505,7 +479,6 @@ phase_7_gst_rockchip() {
     log_phase 7 "Building gstreamer1.0-rockchip"
 
     local src="${SOURCES_DIR}/gstreamer1.0-rockchip"
-    local chroot_build="/build"
 
     # Clone source
     if [ ! -d "${src}/.git" ]; then
@@ -514,12 +487,9 @@ phase_7_gst_rockchip() {
         (cd "${src}" && git checkout "${GST_ROCKCHIP_SRCREV}")
     fi
 
-    # Build in chroot
-    sudo mkdir -p "${CHROOT_DIR}${chroot_build}"
-    sudo mount --bind "${WORK_DIR}" "${CHROOT_DIR}${chroot_build}" 2>/dev/null || true
-
+    # Build in container
     rm -rf "${BUILD_DIR}/gst-rockchip"
-    chroot_exec "cd ${chroot_build} && \
+    container_exec "cd /build && \
         meson setup build/gst-rockchip sources/gstreamer1.0-rockchip \
             --prefix=/usr \
             --buildtype=release \
@@ -531,8 +501,8 @@ phase_7_gst_rockchip() {
     # Install
     local destdir="${BUILD_DIR}/gst-rockchip-install"
     rm -rf "${destdir}"
-    chroot_exec "cd ${chroot_build} && \
-        DESTDIR=${chroot_build}/build/gst-rockchip-install meson install -C build/gst-rockchip"
+    container_exec "cd /build && \
+        DESTDIR=/build/build/gst-rockchip-install meson install -C build/gst-rockchip"
 
     make_deb \
         "gstreamer1.0-rockchip" \
@@ -540,8 +510,6 @@ phase_7_gst_rockchip() {
         "GStreamer Rockchip plugins (MPP hardware codec, RGA, KMS source)" \
         "rockchip-mpp, librga2, gstreamer1.0-plugins-base" \
         "${destdir}"
-
-    sudo umount "${CHROOT_DIR}${chroot_build}" 2>/dev/null || true
 
     log "Phase 7 complete: gstreamer1.0-rockchip .deb created"
 }
@@ -551,7 +519,11 @@ phase_7_gst_rockchip() {
 # ============================================================
 
 mkdir -p "${WORK_DIR}"
-chroot_mount
+
+# Ensure container is running for non-setup phases
+if [[ "${START_PHASE}" -gt 0 ]]; then
+    ensure_container_running
+fi
 
 for phase_num in $(seq "${START_PHASE}" "${END_PHASE}"); do
     phase_name="${PHASE_NAMES[$phase_num]}"
