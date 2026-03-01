@@ -12,8 +12,11 @@ WORK_DIR="${SCRIPT_DIR}/build-gst-rockchip"
 SOURCES_DIR="${WORK_DIR}/sources"
 BUILD_DIR="${WORK_DIR}/build"
 DEBS_DIR="${WORK_DIR}/debs"
-PACKAGES_DIR="${SCRIPT_DIR}/yocto-rockchip/packages"
-PATCHES_BASE="${SCRIPT_DIR}/yocto-rockchip/meta-rockchip/recipes-multimedia/gstreamer"
+YOCTO_DIR="${SCRIPT_DIR}/yocto-rockchip"
+YOCTO_GIT="https://gitlab-r.eric3u.xyz:21443/argon/meta-rockchip.git"
+YOCTO_BRANCH="scarthgap-vendor"
+PACKAGES_DIR="${YOCTO_DIR}/packages"
+PATCHES_BASE="${YOCTO_DIR}/recipes-multimedia/gstreamer"
 
 # Docker settings
 DOCKER_IMAGE_NAME="rockchip-gstreamer-builder"
@@ -22,7 +25,7 @@ DOCKERFILE_PATH="${SCRIPT_DIR}/Dockerfile.gst-builder"
 
 # Versions
 GST_VERSION="1.22.12"
-GST_PATCH_VERSION="1.22.9"
+GST_PATCH_VERSION="1.22.12"
 
 # Source repos
 MIRRORS_GIT="https://github.com/JeffyCN/mirrors.git"
@@ -52,7 +55,7 @@ HOST_UID="$(id -u)"
 HOST_GID="$(id -g)"
 
 container_exec() {
-    docker exec "${DOCKER_CONTAINER_NAME}" /bin/bash -c "$*"
+    docker exec -w /build "${DOCKER_CONTAINER_NAME}" /bin/bash -c "$*"
 }
 
 # Fix ownership of container-created (root-owned) files back to host user
@@ -305,7 +308,11 @@ phase_0_setup() {
         err "QEMU binfmt_misc not registered for aarch64. Install: sudo apt install qemu-user-static binfmt-support"
     fi
 
-    mkdir -p "${SOURCES_DIR}" "${BUILD_DIR}" "${DEBS_DIR}"
+    # Clone yocto-rockchip (provides patches and packages)
+    if [ ! -d "${YOCTO_DIR}/.git" ]; then
+        log "Cloning yocto-rockchip..."
+        git clone --branch "${YOCTO_BRANCH}" --single-branch "${YOCTO_GIT}" "${YOCTO_DIR}"
+    fi
 
     # Build Docker image (idempotent, uses layer cache)
     log "Building Docker image '${DOCKER_IMAGE_NAME}'..."
@@ -314,11 +321,21 @@ phase_0_setup() {
         -f "${DOCKERFILE_PATH}" \
         "${SCRIPT_DIR}"
 
-    # Start container if not already running
+    # Start container if not already running (recreate if mounts changed)
+    local need_recreate=false
     if docker inspect --format='{{.State.Running}}' "${DOCKER_CONTAINER_NAME}" 2>/dev/null | grep -q true; then
-        log "Container '${DOCKER_CONTAINER_NAME}' already running"
+        local current_mount
+        current_mount="$(docker inspect --format='{{range .Mounts}}{{if eq .Destination "/build"}}{{.Source}}{{end}}{{end}}' "${DOCKER_CONTAINER_NAME}")"
+        if [[ "${current_mount}" == "${WORK_DIR}" ]]; then
+            log "Container '${DOCKER_CONTAINER_NAME}' already running"
+        else
+            log "Container mount path changed, recreating..."
+            need_recreate=true
+        fi
     else
-        # Remove stale stopped container if exists
+        need_recreate=true
+    fi
+    if [[ "${need_recreate}" == true ]]; then
         docker rm -f "${DOCKER_CONTAINER_NAME}" 2>/dev/null || true
 
         log "Starting container '${DOCKER_CONTAINER_NAME}'..."
@@ -552,7 +569,7 @@ phase_7_gst_rockchip() {
 # Execute phases
 # ============================================================
 
-mkdir -p "${WORK_DIR}"
+mkdir -p "${SOURCES_DIR}" "${BUILD_DIR}" "${DEBS_DIR}"
 
 # Ensure container is running for non-setup phases
 if [[ "${START_PHASE}" -gt 0 ]]; then
