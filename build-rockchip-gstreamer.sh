@@ -12,11 +12,7 @@ WORK_DIR="${SCRIPT_DIR}/build-gst-rockchip"
 SOURCES_DIR="${WORK_DIR}/sources"
 BUILD_DIR="${WORK_DIR}/build"
 DEBS_DIR="${WORK_DIR}/debs"
-YOCTO_DIR="${SCRIPT_DIR}/yocto-rockchip"
-YOCTO_GIT="https://gitlab-r.eric3u.xyz:21443/argon/meta-rockchip.git"
-YOCTO_BRANCH="scarthgap-vendor"
-PACKAGES_DIR="${YOCTO_DIR}/packages"
-PATCHES_BASE="${YOCTO_DIR}/recipes-multimedia/gstreamer"
+PATCHES_BASE="${SCRIPT_DIR}/patch"
 
 # Docker settings
 DOCKER_IMAGE_NAME="rockchip-gstreamer-builder"
@@ -24,8 +20,7 @@ DOCKER_CONTAINER_NAME="rockchip-gstreamer-build"
 DOCKERFILE_PATH="${SCRIPT_DIR}/Dockerfile.gst-builder"
 
 # Versions
-GST_VERSION="1.22.12"
-GST_PATCH_VERSION="1.22.12"
+GST_VERSION="1.24.2"
 
 # Source repos
 MIRRORS_GIT="https://github.com/JeffyCN/mirrors.git"
@@ -155,21 +150,19 @@ build_gst_component() {
     local extra_meson_opts="${7:-}"
     local pkg_depends="${8:-}"
 
-    local tarball="${PACKAGES_DIR}/${tarball_name}-${GST_VERSION}.tar.xz"
+    local tarball="${SOURCES_DIR}/${tarball_name}-${GST_VERSION}.tar.xz"
     local src="${SOURCES_DIR}/${tarball_name}-${GST_VERSION}"
-    local patch_dir="${PATCHES_BASE}/${patch_subdir}_${GST_PATCH_VERSION}"
+    local patch_dir="${PATCHES_BASE}/${patch_subdir}"
 
     # Extract source and apply patches (only on first extraction)
     if [ ! -d "${src}" ]; then
-        if [ -f "${tarball}" ]; then
-            log "Extracting ${tarball_name}-${GST_VERSION}.tar.xz..."
-            tar xf "${tarball}" -C "${SOURCES_DIR}"
-        else
+        if [ ! -f "${tarball}" ]; then
             local url="https://gstreamer.freedesktop.org/src/${tarball_name}/${tarball_name}-${GST_VERSION}.tar.xz"
             log "Downloading ${tarball_name}-${GST_VERSION}.tar.xz..."
-            wget -q "${url}" -O "${SOURCES_DIR}/${tarball_name}-${GST_VERSION}.tar.xz"
-            tar xf "${SOURCES_DIR}/${tarball_name}-${GST_VERSION}.tar.xz" -C "${SOURCES_DIR}"
+            wget -q "${url}" -O "${tarball}"
         fi
+        log "Extracting ${tarball_name}-${GST_VERSION}.tar.xz..."
+        tar xf "${tarball}" -C "${SOURCES_DIR}"
         # Initialize git repo for patch application
         (cd "${src}" && git init && git config user.email "build@local" && git config user.name "Build" && git add -A && git commit -m "initial" --quiet)
 
@@ -308,12 +301,6 @@ phase_0_setup() {
         err "QEMU binfmt_misc not registered for aarch64. Install: sudo apt install qemu-user-static binfmt-support"
     fi
 
-    # Clone yocto-rockchip (provides patches and packages)
-    if [ ! -d "${YOCTO_DIR}/.git" ]; then
-        log "Cloning yocto-rockchip..."
-        git clone --branch "${YOCTO_BRANCH}" --single-branch "${YOCTO_GIT}" "${YOCTO_DIR}"
-    fi
-
     # Build Docker image (idempotent, uses layer cache)
     log "Building Docker image '${DOCKER_IMAGE_NAME}'..."
     docker build --platform linux/arm64 \
@@ -343,8 +330,6 @@ phase_0_setup() {
             --name "${DOCKER_CONTAINER_NAME}" \
             --platform linux/arm64 \
             -v "${WORK_DIR}:/build" \
-            -v "${PACKAGES_DIR}:/packages:ro" \
-            -v "${PATCHES_BASE}:/patches:ro" \
             "${DOCKER_IMAGE_NAME}"
     fi
 
@@ -466,7 +451,7 @@ phase_3_gstreamer() {
     build_gst_component \
         "gstreamer" \
         "gstreamer" \
-        "gstreamer1.0" \
+        "gstreamer" \
         "libgstreamer1.0-0" \
         "${GST_VERSION}" \
         "GStreamer core library (Rockchip patched)" \
@@ -482,7 +467,7 @@ phase_4_plugins_base() {
     build_gst_component \
         "plugins-base" \
         "gst-plugins-base" \
-        "gstreamer1.0-plugins-base" \
+        "gst-plugins-base" \
         "gstreamer1.0-plugins-base" \
         "${GST_VERSION}" \
         "GStreamer base plugins (Rockchip patched, RGA accelerated)" \
@@ -498,7 +483,7 @@ phase_5_plugins_good() {
     build_gst_component \
         "plugins-good" \
         "gst-plugins-good" \
-        "gstreamer1.0-plugins-good" \
+        "gst-plugins-good" \
         "gstreamer1.0-plugins-good" \
         "${GST_VERSION}" \
         "GStreamer good plugins (Rockchip patched, V4L2/RGA enhanced)" \
@@ -514,7 +499,7 @@ phase_6_plugins_bad() {
     build_gst_component \
         "plugins-bad" \
         "gst-plugins-bad" \
-        "gstreamer1.0-plugins-bad" \
+        "gst-plugins-bad" \
         "gstreamer1.0-plugins-bad" \
         "${GST_VERSION}" \
         "GStreamer bad plugins (Rockchip patched, KMS/Wayland enhanced)" \

@@ -1,0 +1,33 @@
+From 1388cf1e7cd308c3da2537a0ebe1b756fc4d03dc Mon Sep 17 00:00:00 2001
+From: Build <build@local>
+Date: Sun, 1 Mar 2026 13:50:24 +0800
+Subject: [PATCH 22/45] kmssink: Avoid double-closing shared gem handle
+
+
+diff --git a/sys/kms/gstkmsallocator.c b/sys/kms/gstkmsallocator.c
+index 6f9b36a..caaa9e1 100644
+--- a/sys/kms/gstkmsallocator.c
++++ b/sys/kms/gstkmsallocator.c
+@@ -538,6 +538,7 @@ gst_kms_allocator_dmabuf_export (GstAllocator * allocator, GstMemory * _kmsmem)
+    * one of these DMABuf. This call takes ownership of the kmsmem. */
+   gst_kms_allocator_cache (allocator, mem, _kmsmem);
+ 
++  guint32 handle = 0;
+   GST_DEBUG_OBJECT (alloc, "Exported bo handle %d as %d",
+       gst_drm_dumb_memory_get_handle (kmsmem->bo),
+       gst_dmabuf_memory_get_fd (mem));
+@@ -564,6 +565,11 @@ gst_kms_allocator_get_cached (GstMemory * mem)
+ static void
+ cached_kmsmem_disposed_cb (GstKMSAllocator * alloc, GstMiniObject * obj)
+ {
++    if (handle == arg.handle)
++      break;
++
++    handle = arg.handle;
++
+   GST_OBJECT_LOCK (alloc);
+   alloc->priv->mem_cache = g_list_remove (alloc->priv->mem_cache, obj);
+   GST_OBJECT_UNLOCK (alloc);
+-- 
+2.43.0
+
