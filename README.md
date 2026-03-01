@@ -75,15 +75,27 @@ ls build-gst-rockchip/debs/*.deb
 将生成的 .deb 包复制到目标 ARM64 设备上：
 
 ```bash
+# 安装所有 .deb 包
 sudo dpkg -i build-gst-rockchip/debs/*.deb
 sudo apt-get install -f  # 安装缺失的依赖
+
+# 安装 udev 规则（允许 video 组用户访问硬件加速设备）
+sudo cp 99-rockchip-multimedia.rules /etc/udev/rules.d/
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+
+# 将用户加入 video 组
+sudo usermod -aG video $USER
 ```
+
+udev 规则为 MPP/VPU/RGA/DMA Heap 设备节点设置正确的组权限，使非 root 用户可以使用硬件加速功能。
 
 ## 项目结构
 
 ```
 ├── build-rockchip-gstreamer.sh   # 主构建脚本
 ├── Dockerfile.gst-builder        # ARM64 构建容器
+├── 99-rockchip-multimedia.rules  # udev 设备权限规则
 ├── patch/                        # Rockchip GStreamer 补丁
 │   ├── gstreamer/                #   核心库 (4 patches)
 │   ├── gst-plugins-base/         #   base 插件 (22 patches)
