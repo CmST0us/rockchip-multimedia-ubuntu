@@ -1,8 +1,12 @@
-From 837cd39ba33735b247e9cb4e0d96a16260156b64 Mon Sep 17 00:00:00 2001
+From 1959642f11f2bb26e32da41a7590b0e9e6f9a38c Mon Sep 17 00:00:00 2001
 From: Build <build@local>
 Date: Sun, 1 Mar 2026 13:50:24 +0800
 Subject: [PATCH 19/45] waylandsink: Support frame-sync mode
 
+---
+ ext/wayland/gstwaylandsink.c | 9 +++++++++
+ ext/wayland/gstwaylandsink.h | 1 +
+ 2 files changed, 10 insertions(+)
 
 diff --git a/ext/wayland/gstwaylandsink.c b/ext/wayland/gstwaylandsink.c
 index 4d6ba43..86a95e7 100644
@@ -64,6 +68,3 @@ index c565d39..03b5885 100644
    GstBuffer *last_buffer;
  
    GstVideoOrientationMethod sink_rotate_method;
--- 
-2.43.0
-

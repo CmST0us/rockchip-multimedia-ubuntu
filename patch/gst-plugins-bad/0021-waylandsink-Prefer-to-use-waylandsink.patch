@@ -1,4 +1,4 @@
-From be0e9a338217a9c584bd46301d734c62e1bed236 Mon Sep 17 00:00:00 2001
+From b431cf50fb2b3976cdac3aa36e8ab4b958ff9b01 Mon Sep 17 00:00:00 2001
 From: Jeffy Chen <jeffy.chen@rock-chips.com>
 Date: Mon, 27 Dec 2021 21:37:06 +0800
 Subject: [PATCH 21/45] waylandsink: Prefer to use waylandsink
@@ -6,6 +6,9 @@ Subject: [PATCH 21/45] waylandsink: Prefer to use waylandsink
 Increase rank to primary.
 
 Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
+---
+ ext/wayland/gstwaylandsink.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/ext/wayland/gstwaylandsink.c b/ext/wayland/gstwaylandsink.c
 index 86a95e7..0baa22e 100644
@@ -20,6 +23,3 @@ index 86a95e7..0baa22e 100644
      GST_TYPE_WAYLAND_SINK);
  
  #define GST_TYPE_WL_WINDOW_LAYER (gst_wl_window_layer_get_type ())
--- 
-2.43.0
-

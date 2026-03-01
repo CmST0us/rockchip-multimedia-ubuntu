@@ -1,4 +1,4 @@
-From f5731bc490434b98d84b603742b36fe8972c4c1d Mon Sep 17 00:00:00 2001
+From 8096a05c2197f546b4f817dc9a1e6c0d53d45d86 Mon Sep 17 00:00:00 2001
 From: Jeffy Chen <jeffy.chen@rock-chips.com>
 Date: Thu, 21 Jul 2022 12:29:27 +0800
 Subject: [PATCH 26/45] HACK: waylandsink: Set size in
@@ -7,6 +7,9 @@ Subject: [PATCH 26/45] HACK: waylandsink: Set size in
 Tested with hacked enlightenment.
 
 Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
+---
+ gst-libs/gst/wayland/gstwlwindow.c | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
 
 diff --git a/gst-libs/gst/wayland/gstwlwindow.c b/gst-libs/gst/wayland/gstwlwindow.c
 index 91b25b1..017904d 100644
@@ -32,6 +35,3 @@ index 91b25b1..017904d 100644
    }
  
    wl_subsurface_set_position (priv->video_subsurface, res.x, res.y);
--- 
-2.43.0
-

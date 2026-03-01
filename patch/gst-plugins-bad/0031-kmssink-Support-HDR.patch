@@ -1,9 +1,13 @@
-From 89748aaa1e4b46a1920d8cb2a542118d1ece47a0 Mon Sep 17 00:00:00 2001
+From 67fb52655e8c862a477e8870f7c18fd3fa529b76 Mon Sep 17 00:00:00 2001
 From: Jiajian Wu <jair.wu@rock-chips.com>
 Date: Mon, 3 Jul 2023 15:26:53 +0800
 Subject: [PATCH 31/45] kmssink: Support HDR
 
 Signed-off-by: Jiajian Wu <jair.wu@rock-chips.com>
+---
+ sys/kms/gstkmssink.c | 206 +++++++++++++++++++++++++++++++++++++++----
+ sys/kms/gstkmssink.h |   7 ++
+ 2 files changed, 195 insertions(+), 18 deletions(-)
 
 diff --git a/sys/kms/gstkmssink.c b/sys/kms/gstkmssink.c
 index 5b2ae38..4883c3e 100644
@@ -397,6 +401,3 @@ index 5c4065a..80b5c3e 100644
    GstVideoMasteringDisplayInfo hdr_minfo;
    GstVideoContentLightLevel hdr_cll;
  #endif
--- 
-2.43.0
-

@@ -1,9 +1,13 @@
-From e03ad7824f8f7c505e55a90276504720622851cb Mon Sep 17 00:00:00 2001
+From 53e9f12ec4ec33e03682dadd79c0fcd44787a724 Mon Sep 17 00:00:00 2001
 From: Jeffy Chen <jeffy.chen@rock-chips.com>
 Date: Thu, 20 Jun 2019 12:43:20 +0800
 Subject: [PATCH 04/45] kmssink: Request window handle
 
 Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
+---
+ sys/kms/gstkmssink.c | 13 +++++++++++++
+ sys/kms/gstkmssink.h |  2 ++
+ 2 files changed, 15 insertions(+)
 
 diff --git a/sys/kms/gstkmssink.c b/sys/kms/gstkmssink.c
 index f80b346..09ca8b6 100644
@@ -54,6 +58,3 @@ index 317f789..a769d9b 100644
  };
  
  struct _GstKMSSinkClass {
--- 
-2.43.0
-

@@ -1,10 +1,13 @@
-From 2bde4c43b3423a3cfbe75d1d7539a098db81785c Mon Sep 17 00:00:00 2001
+From c11cff9d2341b60dc9ca76796afb9a1dca653045 Mon Sep 17 00:00:00 2001
 From: "james.lin" <james.lin@rock-chips.com>
 Date: Tue, 23 Jan 2018 19:19:36 +0800
 Subject: [PATCH 02/12] HACK: flacparse: Handle metadata 127
 
 Signed-off-by: james.lin <james.lin@rock-chips.com>
 Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
+---
+ gst/audioparsers/gstflacparse.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
 diff --git a/gst/audioparsers/gstflacparse.c b/gst/audioparsers/gstflacparse.c
 index 8ee450c..7a2ff11 100644

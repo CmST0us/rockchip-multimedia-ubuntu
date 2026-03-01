@@ -1,4 +1,4 @@
-From 031e380fbb5e568a54a3fac21d563947190698cb Mon Sep 17 00:00:00 2001
+From e5a6a081625b8f40969acc81697294764df3e272 Mon Sep 17 00:00:00 2001
 From: Jeffy Chen <jeffy.chen@rock-chips.com>
 Date: Fri, 12 Apr 2024 16:44:09 +0800
 Subject: [PATCH 33/45] kmssink: Try to modeset with video buffer
@@ -6,6 +6,9 @@ Subject: [PATCH 33/45] kmssink: Try to modeset with video buffer
 To avoid the initial black screen.
 
 Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
+---
+ sys/kms/gstkmssink.c | 24 ++++++++++++++++++------
+ 1 file changed, 18 insertions(+), 6 deletions(-)
 
 diff --git a/sys/kms/gstkmssink.c b/sys/kms/gstkmssink.c
 index 9c62629..3c22292 100644
@@ -88,6 +91,3 @@ index 9c62629..3c22292 100644
            goto modesetting_failed;
  
          src.w = GST_VIDEO_SINK_WIDTH (self);
--- 
-2.43.0
-

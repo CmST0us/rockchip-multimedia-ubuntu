@@ -1,8 +1,14 @@
-From d095bc3c3cefaeacb945724514bf58cc85468700 Mon Sep 17 00:00:00 2001
+From a91aed3d5d98343648c0ef88e186cb8809e7ac50 Mon Sep 17 00:00:00 2001
 From: Build <build@local>
 Date: Sun, 1 Mar 2026 13:50:24 +0800
 Subject: [PATCH 18/45] waylandsink: Support window fill-mode property
 
+---
+ ext/wayland/gstwaylandsink.c       |  56 +++++++++++++++
+ ext/wayland/gstwaylandsink.h       |   1 +
+ gst-libs/gst/wayland/gstwlwindow.c | 111 ++++++++++++++++++++++++-----
+ gst-libs/gst/wayland/gstwlwindow.h |  11 +++
+ 4 files changed, 163 insertions(+), 16 deletions(-)
 
 diff --git a/ext/wayland/gstwaylandsink.c b/ext/wayland/gstwaylandsink.c
 index f8f53fe..4d6ba43 100644
@@ -356,6 +362,3 @@ index f67be70..432da60 100644
  GST_WL_API
  void gst_wl_window_ensure_alpha (GstWlWindow * self, gdouble alpha);
  
--- 
-2.43.0
-

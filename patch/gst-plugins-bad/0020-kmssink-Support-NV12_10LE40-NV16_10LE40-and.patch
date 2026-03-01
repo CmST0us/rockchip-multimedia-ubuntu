@@ -1,8 +1,14 @@
-From a3c7abeae266a91093632d11a7f2725b2c2e9509 Mon Sep 17 00:00:00 2001
+From 8653f70990bd806471da3fe40e8fde145b8d6ad1 Mon Sep 17 00:00:00 2001
 From: Build <build@local>
 Date: Sun, 1 Mar 2026 13:50:24 +0800
 Subject: [PATCH 20/45] kmssink: Support NV12_10LE40 NV16_10LE40 and
 
+---
+ sys/kms/gstkmsallocator.c |  49 +++++++++++++-
+ sys/kms/gstkmssink.c      | 139 +++++++++++++++++++++++++++++++++++++-
+ sys/kms/gstkmsutils.c     |   9 +++
+ sys/kms/gstkmsutils.h     |  50 ++++++++++++++
+ 4 files changed, 243 insertions(+), 4 deletions(-)
 
 diff --git a/sys/kms/gstkmsallocator.c b/sys/kms/gstkmsallocator.c
 index fefea31..6f9b36a 100644
@@ -399,6 +405,3 @@ index 6570070..500405a 100644
  GstVideoFormat gst_video_format_from_drm (guint32 drmfmt);
  guint32        gst_drm_format_from_video (GstVideoFormat fmt);
  guint32        gst_drm_bpp_from_drm (guint32 drmfmt);
--- 
-2.43.0
-

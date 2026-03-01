@@ -1,8 +1,11 @@
-From 0db420ee3250a25622bce7d110fa242f638a6025 Mon Sep 17 00:00:00 2001
+From 8dae671fda7f202f54fb6d81445e16dfb5691a05 Mon Sep 17 00:00:00 2001
 From: Build <build@local>
 Date: Sun, 1 Mar 2026 13:50:24 +0800
 Subject: [PATCH 02/45] interim fix vc1 stream may memory leak when pending
 
+---
+ gst/mpegtsdemux/tsdemux.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
 diff --git a/gst/mpegtsdemux/tsdemux.c b/gst/mpegtsdemux/tsdemux.c
 index a3d5eff..c3e213e 100644
@@ -23,6 +26,3 @@ index a3d5eff..c3e213e 100644
          PendingBuffer *pend;
          pend = g_new0 (PendingBuffer, 1);
          pend->buffer = buffer;
--- 
-2.43.0
-

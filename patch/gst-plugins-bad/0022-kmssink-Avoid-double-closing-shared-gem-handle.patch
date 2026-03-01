@@ -1,33 +1,33 @@
-From 1388cf1e7cd308c3da2537a0ebe1b756fc4d03dc Mon Sep 17 00:00:00 2001
+From cddb637ba9b5745125ece63870fa2eada8fa4fbf Mon Sep 17 00:00:00 2001
 From: Build <build@local>
 Date: Sun, 1 Mar 2026 13:50:24 +0800
 Subject: [PATCH 22/45] kmssink: Avoid double-closing shared gem handle
 
+---
+ sys/kms/gstkmsallocator.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
 diff --git a/sys/kms/gstkmsallocator.c b/sys/kms/gstkmsallocator.c
-index 6f9b36a..caaa9e1 100644
+index 6f9b36a..682fbb1 100644
 --- a/sys/kms/gstkmsallocator.c
 +++ b/sys/kms/gstkmsallocator.c
-@@ -538,6 +538,7 @@ gst_kms_allocator_dmabuf_export (GstAllocator * allocator, GstMemory * _kmsmem)
-    * one of these DMABuf. This call takes ownership of the kmsmem. */
-   gst_kms_allocator_cache (allocator, mem, _kmsmem);
+@@ -495,10 +495,19 @@ done:
+   for (i = 0; i < n_planes; i++) {
+     struct drm_gem_close arg = { gem_handle[i], };
+     gint err;
++    gint j;
  
-+  guint32 handle = 0;
-   GST_DEBUG_OBJECT (alloc, "Exported bo handle %d as %d",
-       gst_drm_dumb_memory_get_handle (kmsmem->bo),
-       gst_dmabuf_memory_get_fd (mem));
-@@ -564,6 +565,11 @@ gst_kms_allocator_get_cached (GstMemory * mem)
- static void
- cached_kmsmem_disposed_cb (GstKMSAllocator * alloc, GstMiniObject * obj)
- {
-+    if (handle == arg.handle)
-+      break;
+     if (!gem_handle[i])
+       continue;
+ 
++    /* Avoid double-closing shared gem handles */
++    for (j = 0; j < i; j++) {
++      if (gem_handle[j] == gem_handle[i])
++        break;
++    }
++    if (j < i)
++      continue;
 +
-+    handle = arg.handle;
-+
-   GST_OBJECT_LOCK (alloc);
-   alloc->priv->mem_cache = g_list_remove (alloc->priv->mem_cache, obj);
-   GST_OBJECT_UNLOCK (alloc);
--- 
-2.43.0
-
+     err = drmIoctl (alloc->priv->fd, DRM_IOCTL_GEM_CLOSE, &arg);
+     if (err)
+       GST_WARNING_OBJECT (allocator,

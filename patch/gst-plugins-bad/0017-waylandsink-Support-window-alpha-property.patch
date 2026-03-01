@@ -1,8 +1,14 @@
-From 34701ce907286d969b0f1712d2abbadbd9e1ea52 Mon Sep 17 00:00:00 2001
+From 9b91ea08993ea118b156c249a9da98fdffc6d68f Mon Sep 17 00:00:00 2001
 From: Build <build@local>
 Date: Sun, 1 Mar 2026 13:50:24 +0800
 Subject: [PATCH 17/45] waylandsink: Support window alpha property
 
+---
+ ext/wayland/gstwaylandsink.c       | 31 ++++++++++++++++++++++++++++++
+ ext/wayland/gstwaylandsink.h       |  1 +
+ gst-libs/gst/wayland/gstwlwindow.c | 10 ++++++++++
+ gst-libs/gst/wayland/gstwlwindow.h |  3 +++
+ 4 files changed, 45 insertions(+)
 
 diff --git a/ext/wayland/gstwaylandsink.c b/ext/wayland/gstwaylandsink.c
 index 5c6ccd8..f8f53fe 100644
@@ -149,6 +155,3 @@ index 65f3c4f..f67be70 100644
  GST_WL_API
  void gst_wl_window_ensure_layer (GstWlWindow * self,
          GstWlWindowLayer layer);
--- 
-2.43.0
-

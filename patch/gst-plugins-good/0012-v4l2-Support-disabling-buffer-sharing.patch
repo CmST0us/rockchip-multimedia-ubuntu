@@ -1,14 +1,18 @@
-From 8d64921f481ea00be350931185bc310e0fc2e50a Mon Sep 17 00:00:00 2001
+From 8d8f2e0d36d2e403454996df449af4565976fab2 Mon Sep 17 00:00:00 2001
 From: Build <build@local>
 Date: Sun, 1 Mar 2026 13:49:11 +0800
 Subject: [PATCH 12/12] v4l2: Support disabling buffer sharing
 
+---
+ sys/v4l2/gstv4l2object.c | 20 ++++++++++++++++++++
+ sys/v4l2/gstv4l2object.h |  5 ++++-
+ 2 files changed, 24 insertions(+), 1 deletion(-)
 
 diff --git a/sys/v4l2/gstv4l2object.c b/sys/v4l2/gstv4l2object.c
-index 2101b41..c781941 100644
+index 69e5f8b..ad586fb 100644
 --- a/sys/v4l2/gstv4l2object.c
 +++ b/sys/v4l2/gstv4l2object.c
-@@ -59,6 +59,7 @@ GST_DEBUG_CATEGORY_EXTERN (v4l2_debug);
+@@ -60,6 +60,7 @@ GST_DEBUG_CATEGORY_EXTERN (v4l2_debug);
  #define GST_V4L2_DEFAULT_HEIGHT         240
  
  static guint DEFAULT_PROP_MIN_BUFFERS = 0;
@@ -16,7 +20,7 @@ index 2101b41..c781941 100644
  
  enum
  {
-@@ -335,6 +336,9 @@ gst_v4l2_object_install_properties_helper (GObjectClass * gobject_class,
+@@ -336,6 +337,9 @@ gst_v4l2_object_install_properties_helper (GObjectClass * gobject_class,
    if (buf)
      DEFAULT_PROP_MIN_BUFFERS = atoi (buf);
  
@@ -26,7 +30,7 @@ index 2101b41..c781941 100644
    g_object_class_install_property (gobject_class, PROP_DEVICE,
        g_param_spec_string ("device", "Device", "Device location",
            default_device, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
-@@ -460,6 +464,12 @@ gst_v4l2_object_install_properties_helper (GObjectClass * gobject_class,
+@@ -461,6 +465,12 @@ gst_v4l2_object_install_properties_helper (GObjectClass * gobject_class,
            0, VIDEO_MAX_FRAME, DEFAULT_PROP_MIN_BUFFERS,
            G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
  
@@ -39,7 +43,7 @@ index 2101b41..c781941 100644
    gst_type_mark_as_plugin_api (GST_TYPE_V4L2_DEVICE_FLAGS, 0);
    gst_type_mark_as_plugin_api (GST_TYPE_V4L2_TV_NORM, 0);
    gst_type_mark_as_plugin_api (GST_TYPE_V4L2_IO_MODE, 0);
-@@ -581,6 +591,7 @@ gst_v4l2_object_new (GstElement * element,
+@@ -582,6 +592,7 @@ gst_v4l2_object_new (GstElement * element,
    }
  
    v4l2object->min_buffers = DEFAULT_PROP_MIN_BUFFERS;
@@ -47,7 +51,7 @@ index 2101b41..c781941 100644
  
    return v4l2object;
  }
-@@ -757,6 +768,9 @@ gst_v4l2_object_set_property_helper (GstV4l2Object * v4l2object,
+@@ -758,6 +769,9 @@ gst_v4l2_object_set_property_helper (GstV4l2Object * v4l2object,
      case PROP_MIN_BUFFERS:
        v4l2object->min_buffers = g_value_get_uint (value);
        break;
@@ -57,7 +61,7 @@ index 2101b41..c781941 100644
      default:
        return FALSE;
        break;
-@@ -857,6 +871,9 @@ gst_v4l2_object_get_property_helper (GstV4l2Object * v4l2object,
+@@ -858,6 +872,9 @@ gst_v4l2_object_get_property_helper (GstV4l2Object * v4l2object,
      case PROP_MIN_BUFFERS:
        g_value_set_uint (value, v4l2object->min_buffers);
        break;
@@ -67,7 +71,7 @@ index 2101b41..c781941 100644
      default:
        return FALSE;
        break;
-@@ -5445,6 +5462,9 @@ gst_v4l2_object_decide_allocation (GstV4l2Object * obj, GstQuery * query)
+@@ -5446,6 +5463,9 @@ gst_v4l2_object_decide_allocation (GstV4l2Object * obj, GstQuery * query)
    if (min + obj->min_buffers + 1 > VIDEO_MAX_FRAME)
      can_share_own_pool = FALSE;
  
@@ -78,18 +82,18 @@ index 2101b41..c781941 100644
    switch (obj->mode) {
      case GST_V4L2_IO_RW:
 diff --git a/sys/v4l2/gstv4l2object.h b/sys/v4l2/gstv4l2object.h
-index 76c637b..8dd2722 100644
+index 76c637b..cfd5636 100644
 --- a/sys/v4l2/gstv4l2object.h
 +++ b/sys/v4l2/gstv4l2object.h
-@@ -226,6 +226,8 @@ struct _GstV4l2Object {
-   gboolean no_initial_format;
-   /* Avoid any try_fmt probe. This is used by v4l2src to speedup start up time
+@@ -228,6 +228,8 @@ struct _GstV4l2Object {
     * on slow USB firmwares. When this is set, gst_v4l2_set_format() will modify
-+
-+  gboolean no_buffer_sharing;
     * the caps to reflect what was negotiated during fixation */
    gboolean skip_try_fmt_probes;
++
++  gboolean no_buffer_sharing;
    
+   guint max_width;
+   guint max_height;
 @@ -256,7 +258,8 @@ GType gst_v4l2_object_get_type (void);
      PROP_EXTRA_CONTROLS,      \
      PROP_PIXEL_ASPECT_RATIO,  \

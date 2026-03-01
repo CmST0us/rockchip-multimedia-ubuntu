@@ -1,4 +1,4 @@
-From a4dfa8d8d0ff6e4608eb8b4a27fe875f323efcab Mon Sep 17 00:00:00 2001
+From 17dbf764a703db0034300b6e9fc350e59e4067ec Mon Sep 17 00:00:00 2001
 From: Jeffy Chen <jeffy.chen@rock-chips.com>
 Date: Thu, 24 Dec 2020 10:16:44 +0800
 Subject: [PATCH 12/45] camerabin2: Support setting default filters
@@ -12,6 +12,9 @@ export CAMERABIN2_VIEWFINDER_FILTER="videoflip method=clockwise"
 gst-launch-1.0 camerabin
 
 Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
+---
+ gst/camerabin2/gstcamerabin2.c | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
 
 diff --git a/gst/camerabin2/gstcamerabin2.c b/gst/camerabin2/gstcamerabin2.c
 index f05192b..c12dfa6 100644
@@ -45,6 +48,3 @@ index f05192b..c12dfa6 100644
    switch (trans) {
      case GST_STATE_CHANGE_NULL_TO_READY:
        if (!gst_camera_bin_create_elements (camera)) {
--- 
-2.43.0
-

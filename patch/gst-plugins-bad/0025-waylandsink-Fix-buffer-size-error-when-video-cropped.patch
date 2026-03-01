@@ -1,8 +1,11 @@
-From 70b04e5a5279c4b658aff036ac66712e9f4a33ce Mon Sep 17 00:00:00 2001
+From 5882ec9815e0d9324d22d228fc83999b2592bb4f Mon Sep 17 00:00:00 2001
 From: Build <build@local>
 Date: Sun, 1 Mar 2026 13:50:24 +0800
 Subject: [PATCH 25/45] waylandsink: Fix buffer size error when video cropped
 
+---
+ ext/wayland/gstwaylandsink.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
 diff --git a/ext/wayland/gstwaylandsink.c b/ext/wayland/gstwaylandsink.c
 index 0baa22e..fddef70 100644
@@ -19,6 +22,3 @@ index 0baa22e..fddef70 100644
  
          if (G_UNLIKELY (!wbuf)) {
            GST_WARNING_OBJECT (self, "failed to import DRM Dumb dmabuf");
--- 
-2.43.0
-

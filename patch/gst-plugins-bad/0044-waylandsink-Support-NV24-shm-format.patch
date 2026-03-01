@@ -1,4 +1,4 @@
-From 71c2457c9a4064d2ecef0e2ac9d6cbaf9a963a3a Mon Sep 17 00:00:00 2001
+From a8c2e0aa802f0920daff345233d4ba0617596a82 Mon Sep 17 00:00:00 2001
 From: Build <build@local>
 Date: Sun, 1 Mar 2026 14:07:32 +0800
 Subject: [PATCH 44/45] waylandsink: Support NV24 shm format
@@ -7,6 +7,10 @@ Tested with:
 gst-launch-1.0 videotestsrc ! 'video/x-raw,format=NV24' ! waylandsink
 
 Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
+---
+ gst-libs/gst/wayland/gstwlvideoformat.c | 1 +
+ gst-libs/gst/wayland/gstwlvideoformat.h | 4 ++--
+ 2 files changed, 3 insertions(+), 2 deletions(-)
 
 diff --git a/gst-libs/gst/wayland/gstwlvideoformat.c b/gst-libs/gst/wayland/gstwlvideoformat.c
 index 5f9a1c4..9328f74 100644
@@ -38,6 +42,3 @@ index e2640cf..7290772 100644
      "I420, YV12, NV12, NV21, Y41B, YUV9, YVU9, BGR16, RGB16 }"
  #endif
  
--- 
-2.43.0
-

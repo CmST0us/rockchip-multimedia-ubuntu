@@ -1,4 +1,4 @@
-From 04c62a53605807a84f89d1de7d2fe1932adb2945 Mon Sep 17 00:00:00 2001
+From 4dbede5f8f854dfb89f0722198482ec3b65ad43a Mon Sep 17 00:00:00 2001
 From: Jeffy Chen <jeffy.chen@rock-chips.com>
 Date: Fri, 12 Apr 2024 17:14:40 +0800
 Subject: [PATCH 34/45] HACK: kmssink: Use rockchip driver
@@ -9,6 +9,9 @@ Tested on RK3588 EVB with:
 gst-play-1.0 demo.mp4 --videosink=kmssink
 
 Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
+---
+ sys/kms/gstkmssink.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
 diff --git a/sys/kms/gstkmssink.c b/sys/kms/gstkmssink.c
 index 3c22292..195bdb8 100644
@@ -30,6 +33,3 @@ index 3c22292..195bdb8 100644
    int i, fd = -1;
  
    for (i = 0; i < G_N_ELEMENTS (drivers); i++) {
--- 
-2.43.0
-

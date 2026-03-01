@@ -1,4 +1,4 @@
-From b7e47a046c475aeaabcab0a0047389b09d0ee01b Mon Sep 17 00:00:00 2001
+From 2a4699ddc8eefc6381963fc89442a4b74009f238 Mon Sep 17 00:00:00 2001
 From: Jeffy Chen <jeffy.chen@rock-chips.com>
 Date: Thu, 30 May 2024 17:53:49 +0800
 Subject: [PATCH 36/45] kmssink: Support forcing disable aspect ratio
@@ -8,6 +8,10 @@ export KMSSINK_IGNORE_ASPECT=1
 gst-launch-1.0 videotestsrc ! kmssink render-rectangle='<0, 0, 500, 500>'
 
 Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
+---
+ sys/kms/gstkmssink.c | 8 ++++++--
+ sys/kms/gstkmssink.h | 1 +
+ 2 files changed, 7 insertions(+), 2 deletions(-)
 
 diff --git a/sys/kms/gstkmssink.c b/sys/kms/gstkmssink.c
 index f85461e..9fd1746 100644
@@ -61,6 +65,3 @@ index 80b5c3e..9f31ac8 100644
    gboolean fullscreen;
  
    GstKMSSyncMode sync_mode;
--- 
-2.43.0
-

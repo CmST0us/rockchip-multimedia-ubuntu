@@ -1,8 +1,15 @@
-From d6a9590806bfc0c2edc8b7da5013e2eb297b7a15 Mon Sep 17 00:00:00 2001
+From 2016501fb9bca5ef952812d500f865e6676019e6 Mon Sep 17 00:00:00 2001
 From: Build <build@local>
 Date: Sun, 1 Mar 2026 13:50:24 +0800
 Subject: [PATCH 08/45] waylandsink: Support setting toplevel window position
 
+---
+ ext/gtk/gstgtkwaylandsink.c        |  6 +++---
+ ext/wayland/gstwaylandsink.c       | 27 ++++++++++++++++-----------
+ ext/wayland/gstwaylandsink.h       |  2 ++
+ gst-libs/gst/wayland/gstwlwindow.c | 26 ++++++++++++++++++++------
+ gst-libs/gst/wayland/gstwlwindow.h |  5 +++--
+ 5 files changed, 44 insertions(+), 22 deletions(-)
 
 diff --git a/ext/gtk/gstgtkwaylandsink.c b/ext/gtk/gstgtkwaylandsink.c
 index 8fcbabe..816913d 100644
@@ -192,6 +199,3 @@ index 4cd85ac..c4e8fc0 100644
  
  GST_WL_API
  const GstVideoRectangle *gst_wl_window_get_render_rectangle (GstWlWindow * self);
--- 
-2.43.0
-

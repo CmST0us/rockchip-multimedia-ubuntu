@@ -1,4 +1,4 @@
-From a6a0973dc7c88604602a2fea5a186ae57fd9f198 Mon Sep 17 00:00:00 2001
+From 0ddb5a9f8c62d9f5b566dfa3f54dd05ca64bbe04 Mon Sep 17 00:00:00 2001
 From: Jeffy Chen <jeffy.chen@rock-chips.com>
 Date: Wed, 11 May 2022 17:24:49 +0800
 Subject: [PATCH 08/12] v4l2src: Support setting max resolution
@@ -7,12 +7,23 @@ Set env "GST_V4L2SRC_MAX_RESOLUTION" to limit resolution, for example:
 export GST_V4L2SRC_MAX_RESOLUTION=1920x1080
 
 Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
+---
+ sys/v4l2/gstv4l2object.c | 20 ++++++++++++++------
+ 1 file changed, 14 insertions(+), 6 deletions(-)
 
 diff --git a/sys/v4l2/gstv4l2object.c b/sys/v4l2/gstv4l2object.c
-index 7113da2..9e823b5 100644
+index 7113da2..03cd08a 100644
 --- a/sys/v4l2/gstv4l2object.c
 +++ b/sys/v4l2/gstv4l2object.c
-@@ -2996,6 +2996,7 @@ gst_v4l2_object_probe_caps_for_format (GstV4l2Object * v4l2object,
+@@ -22,6 +22,7 @@
+ #include <config.h>
+ #endif
+ 
++#include <stdio.h>
+ #include <sys/stat.h>
+ #include <fcntl.h>
+ #include <errno.h>
+@@ -2996,6 +2997,7 @@ gst_v4l2_object_probe_caps_for_format (GstV4l2Object * v4l2object,
    gint fd = v4l2object->video_fd;
    struct v4l2_frmsizeenum size;
    GList *results = NULL;
@@ -20,7 +31,7 @@ index 7113da2..9e823b5 100644
    guint32 w, h;
  
    if (pixelformat == GST_MAKE_FOURCC ('M', 'P', 'E', 'G')) {
-@@ -3003,6 +3004,12 @@ gst_v4l2_object_probe_caps_for_format (GstV4l2Object * v4l2object,
+@@ -3003,6 +3005,12 @@ gst_v4l2_object_probe_caps_for_format (GstV4l2Object * v4l2object,
      return ret;
    }
  
@@ -33,7 +44,7 @@ index 7113da2..9e823b5 100644
    memset (&size, 0, sizeof (struct v4l2_frmsizeenum));
    size.index = 0;
    size.pixel_format = pixelformat;
-@@ -3021,8 +3028,8 @@ gst_v4l2_object_probe_caps_for_format (GstV4l2Object * v4l2object,
+@@ -3021,8 +3029,8 @@ gst_v4l2_object_probe_caps_for_format (GstV4l2Object * v4l2object,
        GST_LOG_OBJECT (v4l2object->dbg_obj, "got discrete frame size %dx%d",
            size.discrete.width, size.discrete.height);
  
@@ -44,7 +55,7 @@ index 7113da2..9e823b5 100644
  
        if (w && h) {
          tmp =
-@@ -3066,8 +3073,8 @@ gst_v4l2_object_probe_caps_for_format (GstV4l2Object * v4l2object,
+@@ -3066,8 +3074,8 @@ gst_v4l2_object_probe_caps_for_format (GstV4l2Object * v4l2object,
      step_h = MAX (size.stepwise.step_height, 1);
      w = MAX (size.stepwise.min_width, step_w);
      h = MAX (size.stepwise.min_height, step_h);
@@ -55,7 +66,7 @@ index 7113da2..9e823b5 100644
  
      /* FIXME: check for sanity and that min/max are multiples of the steps */
  
-@@ -3107,8 +3114,8 @@ gst_v4l2_object_probe_caps_for_format (GstV4l2Object * v4l2object,
+@@ -3107,8 +3115,8 @@ gst_v4l2_object_probe_caps_for_format (GstV4l2Object * v4l2object,
  
      w = MAX (size.stepwise.min_width, 1);
      h = MAX (size.stepwise.min_height, 1);

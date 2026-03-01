@@ -1,8 +1,12 @@
-From 5f2cf07dd246d667a83f2059e6e10f8ce22850b7 Mon Sep 17 00:00:00 2001
+From e9e470479bcba0c9df10d662126a0c6ce965a8fa Mon Sep 17 00:00:00 2001
 From: Build <build@local>
 Date: Sun, 1 Mar 2026 13:48:49 +0800
 Subject: [PATCH 04/12] v4l2: Support preferred formats
 
+---
+ sys/v4l2/gstv4l2object.c | 17 +++++++++++++++++
+ sys/v4l2/gstv4l2src.c    | 37 +++++++++++++++++++++++++++++++++++++
+ 2 files changed, 54 insertions(+)
 
 diff --git a/sys/v4l2/gstv4l2object.c b/sys/v4l2/gstv4l2object.c
 index ff305f5..7113da2 100644

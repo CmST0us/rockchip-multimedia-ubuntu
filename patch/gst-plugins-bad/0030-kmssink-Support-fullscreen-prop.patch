@@ -1,9 +1,13 @@
-From 78e310637d77b3c53295b536c349df93f69bbace Mon Sep 17 00:00:00 2001
+From 7c14c8fc53637734eccacc7ad65d9b14409a8c99 Mon Sep 17 00:00:00 2001
 From: Jeffy Chen <jeffy.chen@rock-chips.com>
 Date: Thu, 15 Sep 2022 18:18:07 +0800
 Subject: [PATCH 30/45] kmssink: Support fullscreen prop
 
 Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
+---
+ sys/kms/gstkmssink.c | 25 +++++++++++++++++++++++++
+ sys/kms/gstkmssink.h |  1 +
+ 2 files changed, 26 insertions(+)
 
 diff --git a/sys/kms/gstkmssink.c b/sys/kms/gstkmssink.c
 index c2a889d..5b2ae38 100644
@@ -81,6 +85,3 @@ index 0d3374d..5c4065a 100644
  
    GstKMSSyncMode sync_mode;
  };
--- 
-2.43.0
-

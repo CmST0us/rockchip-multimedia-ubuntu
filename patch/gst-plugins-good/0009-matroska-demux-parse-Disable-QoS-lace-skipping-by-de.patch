@@ -1,4 +1,4 @@
-From d21aaf5f922fc30a5e4e7a14b6e19c1def8a8095 Mon Sep 17 00:00:00 2001
+From 315087da96d04b736a1449807b118b5479c6f031 Mon Sep 17 00:00:00 2001
 From: Jeffy Chen <jeffy.chen@rock-chips.com>
 Date: Tue, 24 May 2022 12:40:03 +0800
 Subject: [PATCH 09/12] matroska-{demux,parse}: Disable QoS lace skipping by
@@ -11,6 +11,12 @@ Tested with:
 gst-play-1.0 --gapless 1.webm 1.webm
 
 Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
+---
+ gst/matroska/matroska-demux.c       | 1 +
+ gst/matroska/matroska-parse.c       | 1 +
+ gst/matroska/matroska-read-common.c | 2 ++
+ gst/matroska/matroska-read-common.h | 2 ++
+ 4 files changed, 6 insertions(+)
 
 diff --git a/gst/matroska/matroska-demux.c b/gst/matroska/matroska-demux.c
 index 41725e8..669effe 100644

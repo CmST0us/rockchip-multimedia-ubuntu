@@ -1,8 +1,14 @@
-From 76d1678268ab755ba3fc7cfa46ed776d88c51c82 Mon Sep 17 00:00:00 2001
+From 7f5a08af7aa2908b4741bafe1591b7962a97f8e8 Mon Sep 17 00:00:00 2001
 From: Build <build@local>
 Date: Sun, 1 Mar 2026 13:50:24 +0800
 Subject: [PATCH 16/45] waylandsink: Support window layer property
 
+---
+ ext/wayland/gstwaylandsink.c       | 52 ++++++++++++++++++++++++++++--
+ ext/wayland/gstwaylandsink.h       |  1 +
+ gst-libs/gst/wayland/gstwlwindow.c | 40 ++++++++++++++++++++++-
+ gst-libs/gst/wayland/gstwlwindow.h | 15 +++++++--
+ 4 files changed, 103 insertions(+), 5 deletions(-)
 
 diff --git a/ext/wayland/gstwaylandsink.c b/ext/wayland/gstwaylandsink.c
 index f130029..5c6ccd8 100644
@@ -230,6 +236,3 @@ index c4e8fc0..65f3c4f 100644
  
  GST_WL_API
  GstWlWindow *gst_wl_window_new_in_surface (GstWlDisplay * display,
--- 
-2.43.0
-

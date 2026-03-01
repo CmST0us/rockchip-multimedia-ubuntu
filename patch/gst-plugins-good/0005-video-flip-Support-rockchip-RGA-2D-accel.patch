@@ -1,4 +1,4 @@
-From f93b3a941123b5b88763a96c30c269cb03685636 Mon Sep 17 00:00:00 2001
+From 94c111e0c8df3b29274b4397948949ba1400561d Mon Sep 17 00:00:00 2001
 From: Jeffy Chen <jeffy.chen@rock-chips.com>
 Date: Fri, 8 Nov 2019 17:36:20 +0800
 Subject: [PATCH 05/12] video-flip: Support rockchip RGA 2D accel
@@ -6,9 +6,14 @@ Subject: [PATCH 05/12] video-flip: Support rockchip RGA 2D accel
 Disabled by default, set env GST_VIDEO_FLIP_USE_RGA=1 to enable.
 
 Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
+---
+ gst/videofilter/gstvideoflip.c | 223 ++++++++++++++++++++++++++++++++-
+ gst/videofilter/meson.build    |   2 +-
+ meson.build                    |   3 +
+ 3 files changed, 225 insertions(+), 3 deletions(-)
 
 diff --git a/gst/videofilter/gstvideoflip.c b/gst/videofilter/gstvideoflip.c
-index 7995135..2927ea6 100644
+index 7995135..0f78b69 100644
 --- a/gst/videofilter/gstvideoflip.c
 +++ b/gst/videofilter/gstvideoflip.c
 @@ -48,6 +48,11 @@
@@ -41,7 +46,7 @@ index 7995135..2927ea6 100644
              "GRAY8, GRAY16_BE, GRAY16_LE, I420_10LE, I420_10BE, I420_12LE, I420_12BE, "
              "I422_10LE, I422_10BE, I422_12LE, I422_12BE, Y444_10LE, Y444_10BE, Y444_12LE, Y444_12BE }"))
      );
-@@ -1454,6 +1459,193 @@ gst_video_flip_y422 (GstVideoFlip * videoflip, GstVideoFrame * dest,
+@@ -1454,6 +1459,200 @@ gst_video_flip_y422 (GstVideoFlip * videoflip, GstVideoFrame * dest,
    }
  }
  
@@ -163,7 +168,7 @@ index 7995135..2927ea6 100644
 +
 +static gboolean
 +video_flip_try_rga (GstVideoFlip * videoflip,
-+    GstVideoFrame * out_frame, GstVideoFrame * in_frame)
++    GstVideoFrame * out_frame, const GstVideoFrame * in_frame)
 +{
 +  gint sw = GST_VIDEO_FRAME_WIDTH (in_frame);
 +  gint sh = GST_VIDEO_FRAME_HEIGHT (in_frame);
@@ -230,25 +235,32 @@ index 7995135..2927ea6 100644
 +  GST_DEBUG ("flipped with RGA");
 +  return TRUE;
 +}
++
++static void
++video_flip_rga_process (GstVideoFlip * videoflip,
++    GstVideoFrame * out_frame, const GstVideoFrame * in_frame)
++{
++  video_flip_try_rga (videoflip, out_frame, in_frame);
++}
 +#endif
 +
  static void
  gst_video_flip_configure_process (GstVideoFlip * vf)
  {
-@@ -1504,6 +1696,12 @@ gst_video_flip_configure_process (GstVideoFlip * vf)
+@@ -1504,6 +1703,12 @@ gst_video_flip_configure_process (GstVideoFlip * vf)
      case GST_VIDEO_FORMAT_NV21:
        vf->process = gst_video_flip_semi_planar_yuv;
        break;
 +#ifdef HAVE_RGA
 +    case GST_VIDEO_FORMAT_NV12_10LE40:
 +      /* Not supported by the official videoflip */
-+      vf->process = video_flip_try_rga;
++      vf->process = video_flip_rga_process;
 +      break;
 +#endif
      default:
        break;
    }
-@@ -1684,6 +1882,20 @@ gst_video_flip_transform_frame (GstVideoFilter * vfilter,
+@@ -1684,6 +1889,20 @@ gst_video_flip_transform_frame (GstVideoFilter * vfilter,
        GST_VIDEO_FRAME_WIDTH (out_frame), GST_VIDEO_FRAME_HEIGHT (out_frame));
    g_type_class_unref (enum_class);
  
@@ -260,7 +272,7 @@ index 7995135..2927ea6 100644
 +  }
 +
 +  /* Not supported by the official videoflip */
-+  if (G_UNLIKELY (videoflip->process == video_flip_try_rga)) {
++  if (G_UNLIKELY (videoflip->process == video_flip_rga_process)) {
 +    GST_OBJECT_UNLOCK (videoflip);
 +    goto not_negotiated;
 +  }

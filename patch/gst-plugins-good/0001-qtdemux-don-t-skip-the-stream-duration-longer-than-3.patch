@@ -1,4 +1,4 @@
-From 61e1144d99217022ba9d978ac69746a6e5b9deda Mon Sep 17 00:00:00 2001
+From 46515f3c1b45049ef9e077779863df8899b382cb Mon Sep 17 00:00:00 2001
 From: Randy Li <randy.li@rock-chips.com>
 Date: Fri, 21 Jul 2017 10:24:01 +0800
 Subject: [PATCH 01/12] qtdemux: don't skip the stream duration longer than 30s
@@ -7,6 +7,9 @@ Some video files have a wrong total duration, I decide to regard
 the stream inside it longer than 30s as a valid stream.
 
 Signed-off-by: Randy Li <randy.li@rock-chips.com>
+---
+ gst/isomp4/qtdemux.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/gst/isomp4/qtdemux.c b/gst/isomp4/qtdemux.c
 index bf6bbf6..f481a60 100644

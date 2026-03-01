@@ -1,9 +1,12 @@
-From 9aad01ce27ed2b542dae0bee0e094035483596d7 Mon Sep 17 00:00:00 2001
+From 84ba90147a1fc1e7834fbeb97b8491f50d12de81 Mon Sep 17 00:00:00 2001
 From: Jeffy Chen <jeffy.chen@rock-chips.com>
 Date: Wed, 25 Nov 2020 10:51:12 +0800
 Subject: [PATCH 11/45] waylandsink: Drop frame when window not ready
 
 Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
+---
+ ext/wayland/gstwaylandsink.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
 diff --git a/ext/wayland/gstwaylandsink.c b/ext/wayland/gstwaylandsink.c
 index 1adb977..363b67f 100644
@@ -25,6 +28,3 @@ index 1adb977..363b67f 100644
      goto done;
    }
  no_buffer:
--- 
-2.43.0
-

@@ -1,9 +1,19 @@
-From 1a33a42575a1bd342f16796a91e7a172743ff378 Mon Sep 17 00:00:00 2001
+From afc280bf8dd7e45f3bda642aa74e3f68adcfa025 Mon Sep 17 00:00:00 2001
 From: Build <build@local>
 Date: Sun, 1 Mar 2026 14:02:29 +0800
 Subject: [PATCH 39/45] waylandsink: Support NV12_10LE40 NV16_10LE40 and
  NV12|NV12_10LE40|NV16 (AFBC)
 
+---
+ ext/wayland/gstwaylandsink.c            | 102 ++++++++++++++++++++++++
+ gst-libs/gst/wayland/gstwldisplay.c     |  33 ++++++++
+ gst-libs/gst/wayland/gstwldisplay.h     |   9 +++
+ gst-libs/gst/wayland/gstwllinuxdmabuf.c |  24 ++++++
+ gst-libs/gst/wayland/gstwlvideoformat.c |   2 +
+ gst-libs/gst/wayland/gstwlvideoformat.h |  48 +++++++++++
+ gst-libs/gst/wayland/gstwlwindow.c      |  46 ++++++++++-
+ gst-libs/gst/wayland/gstwlwindow.h      |   4 +
+ 8 files changed, 266 insertions(+), 2 deletions(-)
 
 diff --git a/ext/wayland/gstwaylandsink.c b/ext/wayland/gstwaylandsink.c
 index 38d041b..ea44acb 100644
@@ -192,7 +202,7 @@ index 38d041b..ea44acb 100644
    {
      GST_ERROR_OBJECT (self, "failed to activate bufferpool.");
 diff --git a/gst-libs/gst/wayland/gstwldisplay.c b/gst-libs/gst/wayland/gstwldisplay.c
-index 8d38659..537e93c 100644
+index 8d38659..a7fdb91 100644
 --- a/gst-libs/gst/wayland/gstwldisplay.c
 +++ b/gst-libs/gst/wayland/gstwldisplay.c
 @@ -67,6 +67,10 @@ typedef struct _GstWlDisplayPrivate
@@ -234,7 +244,7 @@ index 8d38659..537e93c 100644
  static void gst_wl_display_finalize (GObject * gobject);
  
  static void
-@@ -235,11 +260,31 @@ dmabuf_modifier (void *data, struct zwp_linux_dmabuf_v1 *zwp_linux_dmabuf,
+@@ -235,6 +260,14 @@ dmabuf_modifier (void *data, struct zwp_linux_dmabuf_v1 *zwp_linux_dmabuf,
      g_array_append_val (priv->dmabuf_formats, format);
      g_array_append_val (priv->dmabuf_modifiers, modifier);
    }
@@ -243,29 +253,12 @@ index 8d38659..537e93c 100644
 +    priv->support_nv12_10le40 = TRUE;
 +  else if (format == DRM_FORMAT_NV20)
 +    priv->support_nv16_10le40 = TRUE;
-+}
-+
-+static void
-+dmabuf_modifier (void *data, struct zwp_linux_dmabuf_v1 *zwp_linux_dmabuf,
-+    uint32_t format, uint32_t modifier_hi, uint32_t modifier_lo)
-+{
-+  GstWlDisplay *self = data;
-+  GstWlDisplayPrivate *priv = gst_wl_display_get_instance_private (self);
-+  uint64_t modifier = ((uint64_t) modifier_hi << 32) | modifier_lo;
 +
 +  if (modifier == DRM_AFBC_MODIFIER)
 +    priv->support_afbc = TRUE;
-+
-+  dmabuf_format (data, zwp_linux_dmabuf, format);
  }
  
  static const struct zwp_linux_dmabuf_v1_listener dmabuf_listener = {
-   dmabuf_format,
-   dmabuf_modifier,
-+  dmabuf_modifier,
- };
- 
- gboolean
 diff --git a/gst-libs/gst/wayland/gstwldisplay.h b/gst-libs/gst/wayland/gstwldisplay.h
 index 3d29b4e..5ba62d3 100644
 --- a/gst-libs/gst/wayland/gstwldisplay.h
@@ -519,6 +512,3 @@ index 432da60..bdb7306 100644
  GST_WL_API
  void gst_wl_window_ensure_fill_mode (GstWlWindow * self,
          GstWlWindowFillMode fill_mode);
--- 
-2.43.0
-

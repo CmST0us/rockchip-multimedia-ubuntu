@@ -1,8 +1,11 @@
-From da56738d2792123d0bd08fe124e5f74ab10d7795 Mon Sep 17 00:00:00 2001
+From e4c5e3270bb5195122d9c688d303b578a3f938c1 Mon Sep 17 00:00:00 2001
 From: Build <build@local>
 Date: Sun, 1 Mar 2026 14:01:25 +0800
 Subject: [PATCH 38/45] waylandsink: Use create_immed to create dmabuf
 
+---
+ gst-libs/gst/wayland/gstwllinuxdmabuf.c | 19 ++++---------------
+ 1 file changed, 4 insertions(+), 15 deletions(-)
 
 diff --git a/gst-libs/gst/wayland/gstwllinuxdmabuf.c b/gst-libs/gst/wayland/gstwllinuxdmabuf.c
 index ac53e06..f09d594 100644
@@ -34,6 +37,3 @@ index ac53e06..f09d594 100644
  
  out:
    if (!data.wbuf) {
--- 
-2.43.0
-

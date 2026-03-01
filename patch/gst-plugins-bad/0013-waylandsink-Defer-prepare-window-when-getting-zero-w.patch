@@ -1,4 +1,4 @@
-From 54ade19a324b4605c7348109a5b15b24e35331e6 Mon Sep 17 00:00:00 2001
+From 8b1057396a70c1d7003ca477e4a04b704ce04545 Mon Sep 17 00:00:00 2001
 From: Jeffy Chen <jeffy.chen@rock-chips.com>
 Date: Tue, 19 Jan 2021 11:16:36 +0800
 Subject: [PATCH 13/45] waylandsink: Defer prepare window when getting zero
@@ -7,6 +7,9 @@ Subject: [PATCH 13/45] waylandsink: Defer prepare window when getting zero
 The window might not ready when we requesting it.
 
 Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
+---
+ ext/wayland/gstwaylandsink.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
 diff --git a/ext/wayland/gstwaylandsink.c b/ext/wayland/gstwaylandsink.c
 index 363b67f..f130029 100644
@@ -34,6 +37,3 @@ index 363b67f..f130029 100644
      if (!self->window) {
        /* if we were not provided a window, create one ourselves */
        self->window = gst_wl_window_new_toplevel (self->display,
--- 
-2.43.0
-

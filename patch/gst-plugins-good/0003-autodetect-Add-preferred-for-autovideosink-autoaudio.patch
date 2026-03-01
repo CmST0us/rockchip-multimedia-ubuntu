@@ -1,10 +1,16 @@
-From 7b71c5884cad8e7a444095a448db5ef3abdb5b13 Mon Sep 17 00:00:00 2001
+From f856d5ab435b0fe1683d333f256ac8bea062534b Mon Sep 17 00:00:00 2001
 From: Jeffy Chen <jeffy.chen@rock-chips.com>
 Date: Tue, 11 Jun 2019 10:19:22 +0800
 Subject: [PATCH 03/12] autodetect: Add preferred for
  autovideosink/autoaudiosink
 
 Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
+---
+ gst/autodetect/gstautoaudiosink.c |  3 +++
+ gst/autodetect/gstautodetect.c    | 14 ++++++++++++++
+ gst/autodetect/gstautodetect.h    |  1 +
+ gst/autodetect/gstautovideosink.c |  3 +++
+ 4 files changed, 21 insertions(+)
 
 diff --git a/gst/autodetect/gstautoaudiosink.c b/gst/autodetect/gstautoaudiosink.c
 index 5c18972..088c83e 100644

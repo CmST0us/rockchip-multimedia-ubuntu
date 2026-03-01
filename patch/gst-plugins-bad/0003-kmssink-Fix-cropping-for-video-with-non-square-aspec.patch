@@ -1,4 +1,4 @@
-From fd31410704e8bff31922e77dab7cbac90d14aea2 Mon Sep 17 00:00:00 2001
+From 1425dffe3480d59cd587b449a00e6265b42eeab0 Mon Sep 17 00:00:00 2001
 From: Jeffy Chen <jeffy.chen@rock-chips.com>
 Date: Fri, 19 Jan 2024 10:16:13 +0800
 Subject: [PATCH 03/45] kmssink: Fix cropping for video with non-square aspect
@@ -7,6 +7,9 @@ Subject: [PATCH 03/45] kmssink: Fix cropping for video with non-square aspect
 Give the original video source size to DRM instead of the scaled one.
 
 Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
+---
+ sys/kms/gstkmssink.c | 25 ++++++++++++-------------
+ 1 file changed, 12 insertions(+), 13 deletions(-)
 
 diff --git a/sys/kms/gstkmssink.c b/sys/kms/gstkmssink.c
 index c1e9f64..f80b346 100644
@@ -63,6 +66,3 @@ index c1e9f64..f80b346 100644
  
    /* handle out of screen case */
    if ((result.x + result.w) > self->hdisplay)
--- 
-2.43.0
-

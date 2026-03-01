@@ -1,4 +1,4 @@
-From 71e7e9035dc69a273eba007bdb1c9f6cbb0773c2 Mon Sep 17 00:00:00 2001
+From 9ffa1199c6eae7eade248feb9084372ca89ff7d3 Mon Sep 17 00:00:00 2001
 From: Jeffy Chen <jeffy.chen@rock-chips.com>
 Date: Thu, 15 Sep 2022 17:56:40 +0800
 Subject: [PATCH 27/45] kmssink: Improve monitor and plane selection
@@ -10,6 +10,10 @@ Major changes:
 4/ Fallback to the first usable overlay plane.
 
 Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
+---
+ sys/kms/gstkmssink.c | 144 +++++++++++++++++++++++++++++++++----------
+ sys/kms/gstkmssink.h |   1 +
+ 2 files changed, 112 insertions(+), 33 deletions(-)
 
 diff --git a/sys/kms/gstkmssink.c b/sys/kms/gstkmssink.c
 index 48ef8a3..187b094 100644
@@ -256,6 +260,3 @@ index ef00f23..1d5bd58 100644
    guint pipe;
    gint saved_zpos;
  
--- 
-2.43.0
-

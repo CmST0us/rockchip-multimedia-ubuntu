@@ -1,4 +1,4 @@
-From 9e14065d71de6c6addf27ce16149d5299323b13c Mon Sep 17 00:00:00 2001
+From b30c2311c8d68cb6316ac302828d89cc6efbd12e Mon Sep 17 00:00:00 2001
 From: Jeffy Chen <jeffy.chen@rock-chips.com>
 Date: Mon, 15 Jun 2020 10:03:01 +0800
 Subject: [PATCH 07/45] kmssink: Support setting plane zpos
@@ -10,6 +10,10 @@ Set env KMSSINK_PLANE_ON_BOTTOM to set min zpos.
 Default zpos is max.
 
 Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
+---
+ sys/kms/gstkmssink.c | 78 ++++++++++++++++++++++++++++++++++++++++++++
+ sys/kms/gstkmssink.h |  1 +
+ 2 files changed, 79 insertions(+)
 
 diff --git a/sys/kms/gstkmssink.c b/sys/kms/gstkmssink.c
 index 09ca8b6..b25e599 100644
@@ -133,6 +137,3 @@ index a769d9b..3b9eb7f 100644
  
    /* crtc data */
    guint16 hdisplay, vdisplay;
--- 
-2.43.0
-

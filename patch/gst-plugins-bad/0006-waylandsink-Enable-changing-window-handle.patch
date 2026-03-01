@@ -1,8 +1,12 @@
-From 64976f9c782ddd836e20a61c1337a115c73c0660 Mon Sep 17 00:00:00 2001
+From 6377c6133f73800688923dcb54fb7d70f514e1f0 Mon Sep 17 00:00:00 2001
 From: Build <build@local>
 Date: Sun, 1 Mar 2026 13:50:24 +0800
 Subject: [PATCH 06/45] waylandsink: Enable changing window handle
 
+---
+ ext/wayland/gstwaylandsink.c | 22 ++++++++++++++++------
+ ext/wayland/gstwaylandsink.h |  2 ++
+ 2 files changed, 18 insertions(+), 6 deletions(-)
 
 diff --git a/ext/wayland/gstwaylandsink.c b/ext/wayland/gstwaylandsink.c
 index 52f5e61..9de65dc 100644
@@ -80,6 +84,3 @@ index 5bbb10a..7bf3a9b 100644
  
    GMutex render_lock;
    GstBuffer *last_buffer;
--- 
-2.43.0
-

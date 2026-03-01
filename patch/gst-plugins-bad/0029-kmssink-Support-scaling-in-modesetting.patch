@@ -1,9 +1,13 @@
-From c7630e08eb417e5bdf9c334100d61e7d3e9a8ce3 Mon Sep 17 00:00:00 2001
+From dfcbb97280cc89a5d0a44a2bd1149066a9327b35 Mon Sep 17 00:00:00 2001
 From: Jeffy Chen <jeffy.chen@rock-chips.com>
 Date: Thu, 15 Sep 2022 18:01:12 +0800
 Subject: [PATCH 29/45] kmssink: Support scaling in modesetting
 
 Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
+---
+ sys/kms/gstkmssink.c | 131 +++++++++++++++++++++++++++++--------------
+ sys/kms/gstkmssink.h |   1 +
+ 2 files changed, 90 insertions(+), 42 deletions(-)
 
 diff --git a/sys/kms/gstkmssink.c b/sys/kms/gstkmssink.c
 index 88fc30d..c2a889d 100644
@@ -313,6 +317,3 @@ index 5ce1e55..0d3374d 100644
    gboolean restore_crtc;
    GstStructure *connector_props;
    GstStructure *plane_props;
--- 
-2.43.0
-

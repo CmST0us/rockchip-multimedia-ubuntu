@@ -1,8 +1,11 @@
-From 7a3b826fc02e4d14153d79f45e0d148974983a05 Mon Sep 17 00:00:00 2001
+From 7244f54cade640e2ef37cba8780faab2dd7c1d4a Mon Sep 17 00:00:00 2001
 From: Build <build@local>
 Date: Sun, 1 Mar 2026 14:03:45 +0800
 Subject: [PATCH 41/45] waylandsink: Parse video size in propose_allocation()
 
+---
+ ext/wayland/gstwaylandsink.c | 20 ++++++++++++++++++--
+ 1 file changed, 18 insertions(+), 2 deletions(-)
 
 diff --git a/ext/wayland/gstwaylandsink.c b/ext/wayland/gstwaylandsink.c
 index ea44acb..a13b7d7 100644
@@ -58,6 +61,3 @@ index ea44acb..a13b7d7 100644
  }
  
  /* must be called with the render lock */
--- 
-2.43.0
-

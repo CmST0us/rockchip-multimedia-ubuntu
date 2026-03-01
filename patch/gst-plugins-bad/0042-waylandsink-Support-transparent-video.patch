@@ -1,8 +1,11 @@
-From 06ce912d62474ae11caefc8b6035df030dfc7cd3 Mon Sep 17 00:00:00 2001
+From 10d4153b2352695110445ab96f693dc099da8c63 Mon Sep 17 00:00:00 2001
 From: Build <build@local>
 Date: Sun, 1 Mar 2026 14:04:18 +0800
 Subject: [PATCH 42/45] waylandsink: Support transparent video
 
+---
+ gst-libs/gst/wayland/gstwlwindow.c | 37 ++++++++++++++++++++++--------
+ 1 file changed, 27 insertions(+), 10 deletions(-)
 
 diff --git a/gst-libs/gst/wayland/gstwlwindow.c b/gst-libs/gst/wayland/gstwlwindow.c
 index 6e24ef6..31ce7e0 100644
@@ -82,6 +85,3 @@ index 6e24ef6..31ce7e0 100644
      gst_video_info_set_format (&info, format, width, height);
      alloc = gst_shm_allocator_get ();
  
--- 
-2.43.0
-

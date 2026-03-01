@@ -1,8 +1,11 @@
-From 4f03d31515beb49c96fe27c2b66ab22bde591477 Mon Sep 17 00:00:00 2001
+From c2312a25adc022ad8e45bd64f85ce4db84d7adf8 Mon Sep 17 00:00:00 2001
 From: Build <build@local>
 Date: Sun, 1 Mar 2026 14:00:57 +0800
 Subject: [PATCH 37/45] waylandsink: Fix random crash
 
+---
+ ext/wayland/gstwaylandsink.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/ext/wayland/gstwaylandsink.c b/ext/wayland/gstwaylandsink.c
 index fddef70..38d041b 100644
@@ -17,6 +20,3 @@ index fddef70..38d041b 100644
      GST_DEBUG_OBJECT (self, "redrawing last buffer");
      render_last_buffer (self, TRUE);
    }
--- 
-2.43.0
-

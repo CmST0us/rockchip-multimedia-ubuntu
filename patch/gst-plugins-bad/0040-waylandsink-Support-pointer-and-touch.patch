@@ -1,11 +1,18 @@
-From dd141b48e5fd87907d516a8556b111f89ff07894 Mon Sep 17 00:00:00 2001
+From 7c6f2b84a71a712299acdf38dcc2fb1d14e748fa Mon Sep 17 00:00:00 2001
 From: Build <build@local>
 Date: Sun, 1 Mar 2026 14:02:59 +0800
 Subject: [PATCH 40/45] waylandsink: Support pointer and touch
 
+---
+ gst-libs/gst/wayland/gstwldisplay.c | 293 ++++++++++++++++++++++++++++
+ gst-libs/gst/wayland/gstwldisplay.h |   4 +
+ gst-libs/gst/wayland/gstwlwindow.c  |  17 ++
+ gst-libs/gst/wayland/gstwlwindow.h  |   4 +
+ gst-libs/gst/wayland/meson.build    |   7 +-
+ 5 files changed, 322 insertions(+), 3 deletions(-)
 
 diff --git a/gst-libs/gst/wayland/gstwldisplay.c b/gst-libs/gst/wayland/gstwldisplay.c
-index 537e93c..f0ddd96 100644
+index a7fdb91..573b1fa 100644
 --- a/gst-libs/gst/wayland/gstwldisplay.c
 +++ b/gst-libs/gst/wayland/gstwldisplay.c
 @@ -23,6 +23,7 @@
@@ -120,7 +127,7 @@ index 537e93c..f0ddd96 100644
    /* to avoid buffers being unregistered from another thread
     * at the same time, take their ownership */
    g_mutex_lock (&priv->buffers_mutex);
-@@ -347,6 +410,222 @@ static const struct xdg_wm_base_listener xdg_wm_base_listener = {
+@@ -335,6 +398,222 @@ static const struct xdg_wm_base_listener xdg_wm_base_listener = {
    handle_xdg_wm_base_ping
  };
  
@@ -343,7 +350,7 @@ index 537e93c..f0ddd96 100644
  static void
  registry_handle_global (void *data, struct wl_registry *registry,
      uint32_t id, const char *interface, uint32_t version)
-@@ -370,6 +649,18 @@ registry_handle_global (void *data, struct wl_registry *registry,
+@@ -358,6 +637,18 @@ registry_handle_global (void *data, struct wl_registry *registry,
    } else if (g_strcmp0 (interface, "wl_shm") == 0) {
      priv->shm = wl_registry_bind (registry, id, &wl_shm_interface, 1);
      wl_shm_add_listener (priv->shm, &shm_listener, self);
@@ -362,7 +369,7 @@ index 537e93c..f0ddd96 100644
    } else if (g_strcmp0 (interface, "wp_viewporter") == 0) {
      priv->viewporter =
          wl_registry_bind (registry, id, &wp_viewporter_interface, 1);
-@@ -472,6 +763,8 @@ gst_wl_display_new_existing (struct wl_display *display,
+@@ -460,6 +751,8 @@ gst_wl_display_new_existing (struct wl_display *display,
    priv->display_wrapper = wl_proxy_create_wrapper (display);
    priv->own_display = take_ownership;
  
@@ -479,6 +486,3 @@ index 0a5e4dd..d20c8f8 100644
  
    install_headers(wl_headers, subdir: 'gstreamer-1.0/gst/wayland')
    meson.override_dependency(pkg_name, gstwayland_dep)
--- 
-2.43.0
-

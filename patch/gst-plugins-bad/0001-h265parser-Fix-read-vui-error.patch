@@ -1,10 +1,13 @@
-From d3c1245d092dcbf946e3e8697f5e3529e3f42a25 Mon Sep 17 00:00:00 2001
+From 0b0dafaa66d77fa9ac9d1f8b375174bedd11a695 Mon Sep 17 00:00:00 2001
 From: "james.lin" <james.lin@rock-chips.com>
 Date: Mon, 9 Apr 2018 15:32:21 +0800
 Subject: [PATCH 01/45] h265parser: Fix read vui error
 
 Signed-off-by: james.lin <james.lin@rock-chips.com>
 Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
+---
+ gst-libs/gst/codecparsers/gsth265parser.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/gst-libs/gst/codecparsers/gsth265parser.c b/gst-libs/gst/codecparsers/gsth265parser.c
 index eaf3585..cd8eab2 100644
@@ -27,6 +30,3 @@ index eaf3585..cd8eab2 100644
    }
  
    vui->parsed = TRUE;
--- 
-2.43.0
-
